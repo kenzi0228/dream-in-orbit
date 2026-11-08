@@ -1,0 +1,12 @@
+.venv/
+cache/
+validation/
+weights_holdout_abl_*/
+weights_holdout_*/
+pred*.csv
+reports/sweep/
+__pycache__/
+*.pyc
+.DS_Store
+kit_etudiants/annee1/
+kit_etudiants/annee2/
