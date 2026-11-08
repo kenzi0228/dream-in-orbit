@@ -1,0 +1,55 @@
+{
+ "poids_choisis_sur_strict": {
+  "poids": {
+   "gru": 0.6,
+   "gbm_roll": 0.05,
+   "gbm": 0.25,
+   "et": 0.1,
+   "rf": 0.0
+  },
+  "strict": 0.0776,
+  "split": 0.08429
+ },
+ "poids_choisis_sur_split": {
+  "poids": {
+   "gru": 0.25,
+   "gbm_roll": 0.1,
+   "gbm": 0.65,
+   "et": 0.0,
+   "rf": 0.0
+  },
+  "split": 0.08135,
+  "strict": 0.08195
+ },
+ "poids_choisis_sur_la_moyenne": {
+  "poids": {
+   "gru": 0.45,
+   "gbm_roll": 0.0,
+   "gbm": 0.5,
+   "et": 0.05,
+   "rf": 0.0
+  },
+  "strict": 0.0784,
+  "split": 0.08235
+ },
+ "references": {
+  "gru_seul": {
+   "strict": 0.08211,
+   "split": 0.0907
+  },
+  "0.6gru+0.4gbm": {
+   "strict": 0.0778,
+   "split": 0.08355
+  }
+ },
+ "par_circuit": {
+  "par_circuit_choisis_sur_strict": {
+   "strict": 0.07533,
+   "split": 0.08508
+  },
+  "par_circuit_choisis_sur_split": {
+   "split": 0.08016,
+   "strict": 0.08242
+  }
+ }
+}

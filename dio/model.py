@@ -22,14 +22,15 @@ import torch.nn as nn
 
 class WorldModel(nn.Module):
     def __init__(self, n_feat: int, n_out: int, hidden: int = 192, layers: int = 2,
-                 feedback: bool = True, dropout: float = 0.1, feat_dropout: float = 0.05):
+                 feedback: bool = True, dropout: float = 0.1, feat_dropout: float = 0.05, cell: str = "gru"):
         super().__init__()
         self.n_feat, self.n_out, self.feedback = n_feat, n_out, feedback
         n_in = n_feat + (n_out if feedback else 0)
         self.feat_drop = nn.Dropout(feat_dropout)
         self.inp = nn.Sequential(nn.Linear(n_in, hidden), nn.GELU(), nn.Dropout(dropout))
-        self.gru = nn.GRU(hidden, hidden, num_layers=layers, batch_first=True,
-                          dropout=dropout if layers > 1 else 0.0)
+        rnn = nn.LSTM if cell == "lstm" else nn.GRU
+        self.gru = rnn(hidden, hidden, num_layers=layers, batch_first=True,
+                       dropout=dropout if layers > 1 else 0.0)
         self.head = nn.Sequential(nn.Linear(hidden, hidden), nn.GELU(), nn.Linear(hidden, n_out))
 
     def _step_input(self, x_t: torch.Tensor, y_prev: torch.Tensor) -> torch.Tensor:

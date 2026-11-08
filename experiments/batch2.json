@@ -1,0 +1,15 @@
+{
+ "h256": "--hidden 256",
+ "h128_l2": "--layers 2",
+ "lstm": "--cell lstm",
+ "ep120_swa20": "--epochs 120 --tf-epochs 20 --swa 20",
+ "seg336": "--seg 336",
+ "streams32": "--streams 32",
+ "drop02_fd01": "--dropout 0.2 --feat-dropout 0.1",
+ "drop04_fd03": "--dropout 0.4 --feat-dropout 0.3",
+ "noise0": "--noise 0",
+ "noise015": "--noise 0.15",
+ "lr5e-4": "--lr 5e-4",
+ "lr2e-3": "--lr 2e-3",
+ "wd1e-2": "--weight-decay 1e-2"
+}

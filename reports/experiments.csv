@@ -1,0 +1,26 @@
+name,args,strict,split,mean,minutes
+base,,0.0821,0.09011,0.0861,8.6
+hist,"--keep-groups saaf,ltdata,evtf,ftl,hist",0.08137,0.09028,0.08582,8.6
+flux,"--keep-groups saaf,ltdata,evtf,ftl,flux",0.08224,0.09184,0.08704,8.6
+leadlag,"--keep-groups saaf,ltdata,evtf,ftl,leadlag",0.08266,0.10194,0.0923,7.4
+dmop_prefix_rec,"--keep-groups saaf,ltdata,evtf,ftl,dmop_prefix_rec",0.08544,0.09376,0.0896,7.4
+flux_hist_leadlag,"--keep-groups saaf,ltdata,evtf,ftl,flux,hist,leadlag",0.08153,0.09152,0.08653,7.4
+dmop_base,"--keep-groups saaf,ltdata,evtf,ftl,dmop_base",0.08207,0.10092,0.09149,5.5
+dmop_stem_rec,"--keep-groups saaf,ltdata,evtf,ftl,dmop_stem_rec",0.10294,0.09422,0.09858,5.5
+h128_l2,--layers 2,0.08353,0.09925,0.09139,13.8
+lstm,--cell lstm,0.08246,0.08988,0.08617,13.9
+h256,--hidden 256,0.08361,0.09027,0.08694,14.3
+streams32,--streams 32,0.08329,0.09826,0.09077,4.3
+seg336,--seg 336,0.08303,0.0975,0.09027,6.8
+ep120_swa20,--epochs 120 --tf-epochs 20 --swa 20,0.08318,0.0926,0.08789,10.7
+drop02_fd01,--dropout 0.2 --feat-dropout 0.1,0.08224,0.09077,0.0865,6.9
+drop04_fd03,--dropout 0.4 --feat-dropout 0.3,0.08265,0.09183,0.08724,6.9
+noise0,--noise 0,0.08247,0.0921,0.08729,6.9
+noise015,--noise 0.15,0.08205,0.09091,0.08648,7.0
+lr5e-4,--lr 5e-4,0.08241,0.09746,0.08993,7.0
+lr2e-3,--lr 2e-3,0.08315,0.09189,0.08752,5.9
+wd1e-2,--weight-decay 1e-2,0.08207,0.09051,0.08629,5.4
+base_seed1,--seed-offset 1,0.08283,0.09146,0.08714,8.5
+base_seed2,--seed-offset 2,0.083,0.09159,0.0873,8.5
+huber03,--huber 0.3,0.0825,0.09163,0.08706,8.4
+huber01,--huber 0.1,0.08374,0.10335,0.09354,8.4

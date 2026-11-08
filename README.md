@@ -7,8 +7,11 @@ entière à partir de ses 7 premiers jours réels :
 
     état_{t-1} + actions_t + contexte_t  --(GRU)-->  état_t
 
-La prédiction est la moyenne d'un ensemble de modèles (Deep Ensembles) ; leur
-écart-type donne l'incertitude.
+La prédiction est la moyenne d'un ensemble de 5 GRU (Deep Ensembles, leur écart-type donne
+l'incertitude), mélangée à 55 / 45 avec un composant gradient boosting heure par heure qui
+lit les commandes dmop (`dio/gbm.py`). Les deux modèles font des erreurs peu corrélées, et
+le mélange gagne 0,004 à 0,008 de RMSE dans les deux protocoles de validation.
+`python train.py --gbm-weight 0` donne la version réseau de neurones pur.
 
 ## Installation
 
@@ -55,7 +58,9 @@ Autres scripts :
 | `dio/features.py` | alignement des 5 fichiers de contexte sur la grille horaire (fiches des données dans `RAPPORT.md`) |
 | `dio/data.py` | chargement avec cache (`cache/`), groupes de features |
 | `dio/model.py` | le world model GRU (teacher forcing, rollout avec scheduled sampling), normalisation |
-| `dio/simulate.py` | simulation d'une période avec un ensemble de modèles |
+| `dio/simulate.py` | simulation d'une période avec un ensemble de modèles (GRU pondérés + composant GBM) |
+| `dio/gbm.py` | le composant gradient boosting (un modèle sklearn par circuit, déterministe) |
+| `experiments/` | harnais d'expériences bi-protocole et études de mélange (`reports/experiments.csv`, `reports/gbm_*.json`) |
 | `dio/metrics.py` | RMSE identique à `evaluate.py`, RMSE par circuit et par horizon |
 | `train.py` | entraînement en une commande (ensemble de 5 GRU) |
 | `predict.py` | interface officielle |
@@ -65,17 +70,18 @@ les figures dans `reports/figures/`.
 
 ## Résultats (RMSE de simulation sur annee2, après entraînement sur annee1 seule)
 
-| Modèle | RMSE |
-|---|---|
-| Constante | 0,106 |
-| Gradient boosting heure par heure | 0,092 |
-| **World model (ensemble de 5 GRU)** | **0,082** |
+| Modèle | RMSE strict (annee1 → annee2) | RMSE chrono (2 ans → ½ annee2) |
+|---|---|---|
+| Constante | 0,106 | 0,105 |
+| Gradient boosting seul (toutes features) | 0,089 | 0,082 |
+| Ensemble de 5 GRU seul | 0,082 | 0,091 |
+| **World model livré (0,55 GRU + 0,45 GBM)** | **0,078** | **0,083** |
 
 Le modèle livré dans `weights/` (5 fichiers `model_k.pt`, 2,6 Mo au total, plus `meta.json`
 qui contient le vocabulaire et la liste des features) est entraîné sur annee1 + annee2
 (`python train.py`, 80 époques par modèle, ~25 min sur un portable 6 cœurs, CPU).
-Appliqué à annee2 il donne 0,066, mais annee2 est dans son entraînement : la seule
-estimation honnête est celle de `weights_holdout` (0,082). Il ne lit que les features physiques (Soleil,
+La seule estimation honnête de sa RMSE est celle de `weights_holdout` (0,078 en
+strict) et de `weights_holdout_split` (0,083 en chronologique à deux ans). Il ne lit que les features physiques (Soleil,
 ombre, orbite, pointage, constante solaire, durées d'éclipse) : les commandes dmop et
 les colonnes « calendrier » de ltdata dégradent la généralisation d'une année à l'autre
 (détails et ablations dans le rapport).

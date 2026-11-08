@@ -1,0 +1,10 @@
+{
+ "tout_sans_roll": {
+  "strict": 0.08907,
+  "split": 0.08232
+ },
+ "tout_avec_roll": {
+  "strict": 0.09004,
+  "split": 0.08289
+ }
+}

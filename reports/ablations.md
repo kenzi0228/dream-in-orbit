@@ -1,6 +1,7 @@
-| Ablation | RMSE annee2 | écart vs complet |
+| Ablation | RMSE annee2 | écart vs GRU seul |
 |---|---|---|
-| complet | 0.0821 | +0.0000 |
+| complet (GRU + gradient boosting) | 0.0777 | -0.0044 |
+| GRU seul (sans composant gradient boosting) | 0.0821 | +0.0000 |
 | sans_memoire (MLP heure par heure, avec re-injection) | 0.0841 | +0.0020 |
 | sans_reinjection (planning seul) | 0.0818 | -0.0003 |
 | sans_scheduled_sampling (teacher forcing seul) | 0.0876 | +0.0055 |
