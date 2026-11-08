@@ -1,0 +1,6 @@
+{
+ "base_seed1": "--seed-offset 1",
+ "base_seed2": "--seed-offset 2",
+ "huber03": "--huber 0.3",
+ "huber01": "--huber 0.1"
+}

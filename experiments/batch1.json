@@ -1,0 +1,10 @@
+{
+ "base": "",
+ "flux": "--keep-groups saaf,ltdata,evtf,ftl,flux",
+ "hist": "--keep-groups saaf,ltdata,evtf,ftl,hist",
+ "leadlag": "--keep-groups saaf,ltdata,evtf,ftl,leadlag",
+ "flux_hist_leadlag": "--keep-groups saaf,ltdata,evtf,ftl,flux,hist,leadlag",
+ "dmop_prefix_rec": "--keep-groups saaf,ltdata,evtf,ftl,dmop_prefix_rec",
+ "dmop_stem_rec": "--keep-groups saaf,ltdata,evtf,ftl,dmop_stem_rec",
+ "dmop_base": "--keep-groups saaf,ltdata,evtf,ftl,dmop_base"
+}

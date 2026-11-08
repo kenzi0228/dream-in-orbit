@@ -23,6 +23,7 @@ import numpy as np
 import pandas as pd
 
 H = 3600 * 1000  # une heure en millisecondes
+FEATURE_VERSION = 3  # a incrementer quand on change les colonnes (invalide le cache)
 
 # Altitudes (km) associees aux evenements orbitaux d'evtf, pour reconstruire une
 # altitude approximative. Pericentre / apocentre de Mars Express ~ 300 km / 10 100 km.
@@ -261,7 +262,9 @@ def dmop_vocab(path: Path) -> dict:
     for (st, va), _ in cnt.items():
         stems.setdefault(st, []).append(va)
     switches = sorted([st, va] for st, vs in stems.items() if len(vs) >= 2 for va in vs)
-    return {"cmds": sorted(cmds), "prefixes": prefixes, "switches": switches}
+    stem_counts = sv["stem"].value_counts()
+    stems_freq = sorted(stem_counts[stem_counts >= MIN_COUNT_CMD].index.tolist())
+    return {"cmds": sorted(cmds), "prefixes": prefixes, "switches": switches, "stems": stems_freq}
 
 
 def features_dmop(path: Path, grid: np.ndarray, vocab: dict) -> pd.DataFrame:
@@ -289,6 +292,26 @@ def features_dmop(path: Path, grid: np.ndarray, vocab: dict) -> pd.DataFrame:
         last = np.where(cnt[i] > 0, i, last)
     cnt_df = pd.DataFrame(cnt, index=grid, columns=[f"dm_c_{c}" for c in vocab["cmds"]])
     rec_df = pd.DataFrame(np.log1p(rec), index=grid, columns=[f"dm_r_{c}" for c in vocab["cmds"]])
+
+    # recence par sous-systeme (prefixe) et par stem, toutes variantes confondues :
+    # "depuis combien d'heures le sous-systeme X / la commande X (quelle que soit sa lettre)
+    # n'a pas ete sollicite". Robuste aux changements de variante d'une annee a l'autre.
+    def recency_matrix(keys: pd.Series, vocab_keys: list[str], prefix: str) -> pd.DataFrame:
+        if not vocab_keys:
+            return pd.DataFrame(index=grid)
+        c = pd.DataFrame({"h": df["h"], "k": keys})
+        c = c[c["k"].isin(set(vocab_keys))].groupby(["h", "k"]).size().unstack(fill_value=0)
+        c = c.reindex(index=grid, columns=vocab_keys, fill_value=0).to_numpy(dtype=np.float32)
+        r = np.full(c.shape, RECENCY_CAP_H, dtype=np.float32)
+        lst = np.full(c.shape[1], -np.inf)
+        for i in range(len(grid)):
+            r[i] = np.minimum(i - lst, RECENCY_CAP_H)
+            lst = np.where(c[i] > 0, i, lst)
+        return pd.DataFrame(np.log1p(r), index=grid, columns=[f"{prefix}{k}" for k in vocab_keys])
+
+    stems_all = pd.Series([split_stem(c)[0] for c in df["cmd"]], index=df.index)
+    rec_prefix = recency_matrix(df["prefix"], vocab.get("prefixes", []), "dm_pr_")
+    rec_stem = recency_matrix(stems_all, vocab.get("stems", []), "dm_st_")
 
     # etat des interrupteurs : pour chaque stem, quelle variante a ete emise en dernier
     # (1 pour la variante active, 0 pour les autres ; tout a 0 avant la premiere emission)
@@ -322,21 +345,23 @@ def features_dmop(path: Path, grid: np.ndarray, vocab: dict) -> pd.DataFrame:
                      pd.DataFrame({"id": e_id.values, "e": e["ut_ms"].values}), on="id")
         m = m[m["e"] > m["s"]]
         pair[f"dm_act_{ps}"] = interval_fraction(m["s"].to_numpy(), m["e"].to_numpy(), grid)
-    return pd.concat([out, pair, sw, cnt_df, rec_df], axis=1)
+    return pd.concat([out, pair, sw, cnt_df, rec_df, rec_prefix, rec_stem], axis=1)
 
 
 # --------------------------------------------------------------------------- assemblage
 
 def build_vocab(ctx_dirs: list[Path]) -> dict:
     """Vocabulaire appris sur un ou plusieurs dossiers de contexte (union)."""
-    cmds, prefixes, types, switches = set(), set(), set(), set()
+    cmds, prefixes, types, switches, stems = set(), set(), set(), set(), set()
     for d in ctx_dirs:
         v = dmop_vocab(d / "dmop.csv")
         cmds |= set(v["cmds"])
         prefixes |= set(v["prefixes"])
         switches |= {tuple(x) for x in v["switches"]}
+        stems |= set(v["stems"])
         types |= set(ftl_types(d / "ftl.csv"))
-    return {"cmds": sorted(cmds), "prefixes": sorted(prefixes), "switches": sorted(list(x) for x in switches), "ftl_types": sorted(types)}
+    return {"cmds": sorted(cmds), "prefixes": sorted(prefixes), "switches": sorted(list(x) for x in switches),
+            "stems": sorted(stems), "ftl_types": sorted(types)}
 
 
 def build_features(ctx_dir: Path, grid: np.ndarray, vocab: dict) -> pd.DataFrame:
@@ -349,9 +374,76 @@ def build_features(ctx_dir: Path, grid: np.ndarray, vocab: dict) -> pd.DataFrame
         features_dmop(ctx_dir / "dmop.csv", grid, vocab),
     ]
     X = pd.concat(parts, axis=1)
+    X = pd.concat([X, derived_features(X)], axis=1)
     X.index.name = "ut_ms"
     X = X.replace([np.inf, -np.inf], np.nan).ffill().bfill().fillna(0.0)
     return X.astype(np.float32)
+
+
+LEADLAG_COLS = ["ev_umbra", "ev_penumbra", "saaf_cos_sa", "saaf_cos_sx", "saaf_cos_sy", "saaf_cos_sz",
+                "ftl_comms", "ftl_EARTH", "ftl_SLEW", "ev_log_alt"]
+LEADLAG_SHIFTS = [-3, -2, -1, 1, 2, 3]
+
+
+def derived_features(X: pd.DataFrame) -> pd.DataFrame:
+    """
+    Features derivees des sources de base :
+      fx_*   : flux solaire recu par face = constante solaire x cos(angle) tronque a 0,
+               pour chaque face (+/-x, +/-y, +/-z, et l'axe du capteur sa), corrige de l'ombre
+      hist_* : memoire thermique explicite : heures depuis la derniere ombre, ombre cumulee sur
+               les 7 et 24 dernieres heures, duree de la derniere ombre, flux moyen 6 h / 24 h
+      ll_*   : anticipation / retard : valeurs des heures t-3..t+3 de quelques colonnes cles
+               (le planning est connu a l'avance, c'est une entree legitime)
+    """
+    out = {}
+    sol = X["lt_solarconstantmars"] / 600.0  # ~1 a la constante solaire moyenne
+    shade = (1.0 - X["ev_umbra"] - 0.5 * X["ev_penumbra"]).clip(0, 1)
+    for ax in ["sa", "sx", "sy", "sz"]:
+        c = X[f"saaf_cos_{ax}"]
+        out[f"fx_{ax}_plus"] = sol * c.clip(lower=0) * shade
+        out[f"fx_{ax}_minus"] = sol * (-c).clip(lower=0) * shade
+    out["fx_total"] = sol * shade
+    umb = X["ev_umbra"].to_numpy()
+    since = np.zeros(len(umb))
+    last = -RECENCY_CAP_H
+    for i in range(len(umb)):
+        if umb[i] > 0:
+            last = i
+        since[i] = min(i - last, RECENCY_CAP_H)
+    out["hist_h_since_umbra"] = np.log1p(since)
+    out["hist_umbra_7h"] = X["ev_umbra"].rolling(7, min_periods=1).sum()
+    out["hist_umbra_24h"] = X["ev_umbra"].rolling(24, min_periods=1).sum()
+    out["hist_umbra_7d"] = X["ev_umbra"].rolling(24 * 7, min_periods=1).mean()
+    out["hist_fx_6h"] = out["fx_total"].rolling(6, min_periods=1).mean()
+    out["hist_fx_24h"] = out["fx_total"].rolling(24, min_periods=1).mean()
+    out["hist_comms_24h"] = X["ftl_comms"].rolling(24, min_periods=1).mean()
+    for c in LEADLAG_COLS:
+        if c not in X.columns:
+            continue
+        for k in LEADLAG_SHIFTS:
+            out[f"ll_{c}_{k:+d}"] = X[c].shift(-k)  # k>0 : valeur future (t+k), k<0 : passee
+    # roll_* : statistiques glissantes multi-echelles (passe) : ce qu'un arbre ne peut pas calculer
+    # seul, et qui porte l'inertie thermique (Soleil recu, ombre, pointage, activite des sous-systemes)
+    base = {"fx_total": out["fx_total"]}
+    for c in ROLL_COLS:
+        if c in X.columns:
+            base[c] = X[c]
+    for c, serie in base.items():
+        for w in ROLL_WINDOWS:
+            out[f"roll_{c}_{w}h"] = serie.rolling(w, min_periods=1).mean()
+    for c in ["ev_umbra", "ftl_comms", "fx_total"]:
+        serie = base.get(c)
+        if serie is not None:
+            for w in [6, 24]:
+                out[f"roll_{c}_next{w}h"] = serie[::-1].rolling(w, min_periods=1).mean()[::-1]  # futur (planning connu)
+    return pd.DataFrame(out, index=X.index)
+
+
+ROLL_COLS = ["saaf_cos_sa", "saaf_cos_sx", "saaf_cos_sy", "saaf_cos_sz", "ev_umbra", "ev_penumbra", "ev_occ_mars",
+             "ftl_comms", "ftl_EARTH", "ftl_SLEW", "ftl_INERTIAL", "ftl_NADIR", "ftl_MAINTENANCE", "ftl_WARMUP",
+             "dm_total", "dm_p_ATTT", "dm_p_AAAA", "dm_p_APSF", "dm_p_AMMM", "dm_p_ASSS", "dm_p_AHHH", "dm_p_AOOO",
+             "dm_p_AVVV", "dm_p_AXXX", "dm_p_AACF"]
+ROLL_WINDOWS = [6, 24, 72, 168]
 
 
 def load_power_hourly(power_csv: Path, grid: np.ndarray | None = None) -> pd.DataFrame:

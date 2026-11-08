@@ -34,11 +34,14 @@ def main():
     init = load_power_hourly(test / "power_init.csv")
     grid = hourly_grid(min(init.index.min(), heures.min()), heures.max())
     n_init = int(np.searchsorted(grid, init.index.max(), side="right"))
-    X = build_features(test, grid, meta["vocab"])[meta["features"]].to_numpy()
+    Xall = build_features(test, grid, meta["vocab"])
     Y_init = init.reindex(grid)[meta["targets"]].to_numpy()
     init_bias = a.init_bias if a.init_bias is not None else meta["args"].get("init_bias", 0.0)
+    adapt_steps = meta["args"].get("adapt_steps", 0)
+    adapt_lr = meta["args"].get("adapt_lr", 1e-4)
 
-    mean, std, _ = simulate_ensemble(models, X, Y_init, n_init, init_bias=init_bias)
+    mean, std, _ = simulate_ensemble(models, Xall, Y_init, n_init, init_bias=init_bias,
+                                     adapt_steps=adapt_steps, adapt_lr=adapt_lr, gbm=meta.get("gbm"))
     pred = pd.DataFrame(mean, index=grid, columns=meta["targets"]).reindex(heures)
     pred = pred.ffill().bfill().fillna(0.0)
     pred.index.name = "ut_ms"
@@ -47,7 +50,7 @@ def main():
         s = pd.DataFrame(std, index=grid, columns=meta["targets"]).reindex(heures).fillna(0.0)
         s.index.name = "ut_ms"
         s.to_csv(a.std_out)
-    print(f"{len(pred)} heures predites avec {len(models)} modeles -> {a.out}")
+    print(f"{len(pred)} heures predites avec {len(models)} GRU" + (" + gradient boosting" if meta.get("gbm") else "") + f" -> {a.out}")
 
 
 if __name__ == "__main__":

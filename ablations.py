@@ -16,19 +16,23 @@ import subprocess
 import sys
 from pathlib import Path
 
+# Les ablations du GRU sont mesurees sur le GRU seul (--gbm-weight 0) pour rester lisibles ;
+# les deux premieres lignes donnent le systeme complet (GRU + composant gradient boosting) et le GRU seul.
+GRU = ["--gbm-weight", "0"]
 ABLATIONS = {
-    "complet": [],
-    "sans_memoire (MLP heure par heure, avec re-injection)": ["--no-memory"],
-    "sans_reinjection (planning seul)": ["--no-feedback"],
-    "sans_scheduled_sampling (teacher forcing seul)": ["--tf-epochs", "999"],
-    "fenetres_independantes (pas d'etat transmis)": ["--windows-mode", "--epochs", "20", "--tf-epochs", "6"],
-    "sans_eclipses_evenements (evtf)": ["--drop-groups", "evtf"],
-    "sans_soleil (saaf)": ["--drop-groups", "saaf"],
-    "sans_tendances (ltdata)": ["--drop-groups", "ltdata"],
-    "sans_pointage (ftl)": ["--drop-groups", "ftl"],
-    "avec_commandes_dmop (prefixes + interrupteurs)": ["--keep-groups", "saaf,ltdata,evtf,ftl,dmop_base,dmop_switch"],
-    "avec_toutes_commandes_dmop (560 features)": ["--keep-groups", ""],
-    "avec_calendrier (distance Terre-Mars, angle Soleil-Mars-Terre)": ["--drop-cols", "^$"],
+    "complet (GRU + gradient boosting)": [],
+    "GRU seul (sans composant gradient boosting)": GRU,
+    "sans_memoire (MLP heure par heure, avec re-injection)": GRU + ["--no-memory"],
+    "sans_reinjection (planning seul)": GRU + ["--no-feedback"],
+    "sans_scheduled_sampling (teacher forcing seul)": GRU + ["--tf-epochs", "999"],
+    "fenetres_independantes (pas d'etat transmis)": GRU + ["--windows-mode", "--epochs", "20", "--tf-epochs", "6"],
+    "sans_eclipses_evenements (evtf)": GRU + ["--drop-groups", "evtf"],
+    "sans_soleil (saaf)": GRU + ["--drop-groups", "saaf"],
+    "sans_tendances (ltdata)": GRU + ["--drop-groups", "ltdata"],
+    "sans_pointage (ftl)": GRU + ["--drop-groups", "ftl"],
+    "avec_commandes_dmop (prefixes + interrupteurs)": GRU + ["--keep-groups", "saaf,ltdata,evtf,ftl,dmop_base,dmop_switch"],
+    "avec_toutes_commandes_dmop (560 features)": GRU + ["--keep-groups", ""],
+    "avec_calendrier (distance Terre-Mars, angle Soleil-Mars-Terre)": GRU + ["--drop-cols", "^$"],
 }
 
 
@@ -57,8 +61,8 @@ def main():
                          "worst_circuits": dict(sorted(rep["val_rmse_per_circuit"].items(), key=lambda kv: -kv[1])[:5])}
         out.write_text(json.dumps(results, indent=1))
         print(json.dumps({name: results[name]["val_rmse"]}), flush=True)
-    base = results.get("complet", {}).get("val_rmse")
-    lines = ["| Ablation | RMSE annee2 | écart vs complet |", "|---|---|---|"]
+    base = results.get("GRU seul (sans composant gradient boosting)", {}).get("val_rmse")
+    lines = ["| Ablation | RMSE annee2 | écart vs GRU seul |", "|---|---|---|"]
     for name, r in results.items():
         d = "" if base is None else f"{r['val_rmse'] - base:+.4f}"
         lines.append(f"| {name} | {r['val_rmse']:.4f} | {d} |")

@@ -26,6 +26,7 @@ import torch.nn as nn
 
 from dio.data import get_vocab, load_period, select_features
 from dio.features import H
+from dio.gbm import GBMComponent
 from dio.metrics import rmse, rmse_by_horizon, rmse_per_circuit
 from dio.model import MLPModel, Normalizer, WorldModel
 from dio.simulate import simulate_one
@@ -41,9 +42,12 @@ def parse():
                     help="validation chronologique : train = annee1 + debut de annee2 (fraction F), validation = fin de annee2")
     ap.add_argument("--out", default=None)
     ap.add_argument("--seeds", type=int, default=5)
+    ap.add_argument("--seed-offset", type=int, default=0, help="premiere graine (les graines vont de offset a offset + seeds - 1)")
     ap.add_argument("--epochs", type=int, default=80)
     ap.add_argument("--tf-epochs", type=int, default=15, help="epoques en teacher forcing pur avant le scheduled sampling")
     ap.add_argument("--hidden", type=int, default=128)
+    ap.add_argument("--cell", default="gru", choices=["gru", "lstm"])
+    ap.add_argument("--swa", type=int, default=0, help="moyenne des poids des K dernieres epoques (0 = desactive)")
     ap.add_argument("--layers", type=int, default=1)
     ap.add_argument("--dropout", type=float, default=0.3)
     ap.add_argument("--lr", type=float, default=1e-3)
@@ -51,6 +55,7 @@ def parse():
     ap.add_argument("--windows", type=int, default=256, help="fenetres tirees par epoque")
     ap.add_argument("--dream", type=int, default=24 * 14, help="longueur du reve dans chaque fenetre (heures)")
     ap.add_argument("--noise", type=float, default=0.05, help="bruit sur l'etat re-injecte (unites standardisees)")
+    ap.add_argument("--huber", type=float, default=0.0, help="seuil de la perte de Huber sur l'echelle brute (0 = MSE)")
     ap.add_argument("--no-feedback", action="store_true")
     ap.add_argument("--no-memory", action="store_true")
     ap.add_argument("--drop-groups", default="", help="groupes de features a retirer (saaf,ltdata,evtf,ftl,dmop_base,dmop_switch,dmop_cmd ; dmop = les trois)")
@@ -61,6 +66,8 @@ def parse():
     ap.add_argument("--feat-dropout", type=float, default=0.2)
     ap.add_argument("--input-noise", type=float, default=0.0, help="bruit gaussien sur les features standardisees (train)")
     ap.add_argument("--init-bias", type=float, default=0.0, help="correction de niveau a partir des 7 jours (validation)")
+    ap.add_argument("--adapt-steps", type=int, default=0, help="adaptation au test : pas de gradient sur les 7 jours reels avant le reve")
+    ap.add_argument("--adapt-lr", type=float, default=1e-4)
     ap.add_argument("--eval-every", type=int, default=10)
     ap.add_argument("--stateful", action="store_true", default=True,
                     help="entrainement par flux continus : l'etat cache est transmis entre segments (BPTT tronquee), comme en simulation longue")
@@ -68,13 +75,29 @@ def parse():
     ap.add_argument("--streams", type=int, default=16, help="stateful : nombre de flux paralleles (decoupage du train)")
     ap.add_argument("--seg", type=int, default=168, help="stateful : longueur des segments de BPTT (heures)")
     ap.add_argument("--threads", type=int, default=0)
+    ap.add_argument("--gbm-weight", type=float, default=0.45,
+                    help="poids du composant gradient boosting dans le melange final (0 = ensemble de GRU pur)")
+    ap.add_argument("--gbm-groups", default="", help="groupes de features du GBM (vide = toutes les colonnes)")
+    ap.add_argument("--gbm-drop-cols", default="lt_earthmars|lt_sunmarsearth|^roll_",
+                    help="regex : colonnes retirees des features du GBM (par defaut les 'calendriers')")
+    ap.add_argument("--aux-models", type=int, default=0,
+                    help="GRU auxiliaires entraines sur un autre jeu de features (diversite de l'ensemble, reseau de neurones pur)")
+    ap.add_argument("--aux-groups", default="", help="groupes de features des GRU auxiliaires (vide = toutes)")
+    ap.add_argument("--aux-weight", type=float, default=0.2, help="poids total des GRU auxiliaires dans la moyenne")
     ap.add_argument("--tag", default="")
     return ap.parse_args()
 
 
-def masked_mse(pred_s, y_s, mask, y_std):
-    """MSE sur l'echelle brute (celle de la metrique) : (pred - y)^2 * std^2, en ignorant les heures sans verite."""
-    err = ((pred_s - y_s) * y_std) ** 2
+def masked_mse(pred_s, y_s, mask, y_std, huber: float = 0.0):
+    """MSE sur l'echelle brute (celle de la metrique) : (pred - y)^2 * std^2, en ignorant les heures sans verite.
+    huber > 0 : perte de Huber (quadratique sous le seuil, lineaire au-dela) sur l'echelle brute, plus robuste
+    aux heures aberrantes (changements de regime)."""
+    d = (pred_s - y_s) * y_std
+    if huber > 0:
+        a = d.abs()
+        err = torch.where(a <= huber, 0.5 * d ** 2, huber * (a - 0.5 * huber)) * 2  # x2 : meme echelle que la MSE sous le seuil
+    else:
+        err = d ** 2
     err = err * mask.unsqueeze(-1)
     return err.sum() / (mask.sum() * y_s.shape[-1] + 1e-9)
 
@@ -95,7 +118,7 @@ def train_one(seed, Xtr, Ytr, Xva, Yva, feats, targets, args, out_dir, log):
 
     cls = MLPModel if args.no_memory else WorldModel
     model = cls(n_feat=len(feats), n_out=len(targets), hidden=args.hidden, layers=args.layers,
-                feedback=not args.no_feedback, dropout=args.dropout, feat_dropout=args.feat_dropout)
+                feedback=not args.no_feedback, dropout=args.dropout, feat_dropout=args.feat_dropout, cell=args.cell)
     opt = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
     if args.stateful:
         n_batches = ((len(xs) - args.seg) // args.streams) // args.seg
@@ -105,6 +128,7 @@ def train_one(seed, Xtr, Ytr, Xva, Yva, feats, targets, args, out_dir, log):
     L = N_INIT + args.dream
     T = len(xs)
     history = []
+    swa_sum, swa_n = None, 0
     for ep in range(args.epochs):
         model.train()
         t0 = time.time()
@@ -131,7 +155,7 @@ def train_one(seed, Xtr, Ytr, Xva, Yva, feats, targets, args, out_dir, log):
                     xb = xb + args.input_noise * torch.randn_like(xb)
                 n_init = N_INIT if k == 0 else 0
                 pred, state = model.rollout(xb, yb, n_init=n_init, p_tf=p_tf, noise=args.noise, state=state, return_state=True)
-                loss = masked_mse(pred, yb, mb, y_std)
+                loss = masked_mse(pred, yb, mb, y_std, args.huber)
                 opt.zero_grad()
                 loss.backward()
                 nn.utils.clip_grad_norm_(model.parameters(), 1.0)
@@ -139,7 +163,11 @@ def train_one(seed, Xtr, Ytr, Xva, Yva, feats, targets, args, out_dir, log):
                 sched.step()
                 tot += loss.item()
                 h, yp = state
-                state = (None if h is None else h.detach(), yp.detach())
+                if isinstance(h, tuple):
+                    h = tuple(t.detach() for t in h)
+                elif h is not None:
+                    h = h.detach()
+                state = (h, yp.detach())
             n_batches = n_seg
         for b in range(0 if args.stateful else n_batches):
             idx = sample_windows(T, L, args.batch, rng)
@@ -152,24 +180,32 @@ def train_one(seed, Xtr, Ytr, Xva, Yva, feats, targets, args, out_dir, log):
                 pred = model.forward_tf(xb, yb)
             else:
                 pred = model.rollout(xb, yb, n_init=N_INIT, p_tf=p_tf, noise=args.noise)
-            loss = masked_mse(pred, yb, mb, y_std)
+            loss = masked_mse(pred, yb, mb, y_std, args.huber)
             opt.zero_grad()
             loss.backward()
             nn.utils.clip_grad_norm_(model.parameters(), 1.0)
             opt.step()
             sched.step()
             tot += loss.item()
+        if args.swa and ep >= args.epochs - args.swa:
+            sd = {k: v.detach().clone().float() for k, v in model.state_dict().items()}
+            swa_sum = sd if swa_sum is None else {k: swa_sum[k] + sd[k] for k in sd}
+            swa_n += 1
+            if ep + 1 == args.epochs:
+                model.load_state_dict({k: v / swa_n for k, v in swa_sum.items()})
         rec = {"seed": seed, "epoch": ep + 1, "p_tf": round(p_tf, 3), "train_rmse": math.sqrt(tot / n_batches), "time_s": round(time.time() - t0, 1)}
         if Xva is not None and ((ep + 1) % args.eval_every == 0 or ep + 1 == args.epochs):
             t1 = time.time()
-            pred = simulate_one(model, norm, Xva, Yva, N_INIT, init_bias=args.init_bias)
+            pred = simulate_one(model, norm, Xva, Yva, N_INIT, init_bias=args.init_bias,
+                                adapt_steps=args.adapt_steps, adapt_lr=args.adapt_lr)
             rec["val_rmse"] = rmse(pred[N_INIT:], Yva[N_INIT:])
             rec["val_time_s"] = round(time.time() - t1, 1)
         history.append(rec)
         log(json.dumps(rec))
-    ck = {"state_dict": model.state_dict(), "normalizer": norm.state_dict(),
+    ck = {"state_dict": model.state_dict(), "normalizer": norm.state_dict(), "features": list(feats),
           "config": {"hidden": args.hidden, "layers": args.layers, "feedback": not args.no_feedback,
-                     "dropout": args.dropout, "feat_dropout": args.feat_dropout, "no_memory": args.no_memory, "seed": seed}}
+                     "dropout": args.dropout, "feat_dropout": args.feat_dropout, "no_memory": args.no_memory,
+                     "cell": args.cell, "seed": seed}}
     torch.save(ck, out_dir / f"model_{seed}.pt")
     return model, norm, history
 
@@ -214,23 +250,72 @@ def main():
         Xva = Yva = None
     log(json.dumps({"train_hours": len(Xtr), "val_hours": 0 if Xva is None else len(Xva), "n_features": len(feats), "args": vars(args)}))
     meta = {"features": feats, "targets": targets, "vocab": vocab, "n_init": N_INIT, "args": vars(args)}
+    (out_dir / "meta.json").write_text(json.dumps(meta))  # ecrit tot (poids partiels utilisables), complete a la fin
+
+    preds, weights = [], []
+    model_weights = {}
+    for s in range(args.seed_offset, args.seed_offset + args.seeds):
+        model, norm, hist = train_one(s, Xtr, Ytr, Xva, Yva, feats, targets, args, out_dir, log)
+        model_weights[f"model_{s}.pt"] = 1.0
+        if Xva is not None:
+            preds.append(simulate_one(model, norm, Xva, Yva, N_INIT, init_bias=args.init_bias,
+                                      adapt_steps=args.adapt_steps, adapt_lr=args.adapt_lr))
+            weights.append(1.0)
+            ens = np.average(preds, axis=0, weights=weights)
+            log(json.dumps({"ensemble_size": len(preds), "val_rmse_ensemble": rmse(ens[N_INIT:], Yva[N_INIT:])}))
+
+    # GRU auxiliaires (autre jeu de features), poids total aux_weight
+    if args.aux_models > 0:
+        aux_feats = select_features(X1.columns, keep=args.aux_groups, drop="")
+        aux_tr = (pd.concat([X1, X2]) if Xva is None else (X1 if args.holdout else pd.concat([X1, X2.iloc[:int(len(X2) * args.holdout_split)]])))[aux_feats].to_numpy()
+        aux_va = None if Xva is None else (X2 if args.holdout else X2.iloc[int(len(X2) * args.holdout_split):])[aux_feats].to_numpy()
+        w_main = (1 - args.aux_weight) / args.seeds
+        w_aux = args.aux_weight / args.aux_models
+        model_weights = {k: w_main for k in model_weights}
+        weights = [w_main] * len(weights)
+        for s in range(100, 100 + args.aux_models):
+            model, norm, hist = train_one(s, aux_tr, Ytr, aux_va, Yva, aux_feats, targets, args, out_dir, log)
+            model_weights[f"model_{s}.pt"] = w_aux
+            if Xva is not None:
+                preds.append(simulate_one(model, norm, aux_va, Yva, N_INIT))
+                weights.append(w_aux)
+                ens = np.average(preds, axis=0, weights=weights)
+                log(json.dumps({"ensemble_size": len(preds), "val_rmse_ensemble": rmse(ens[N_INIT:], Yva[N_INIT:])}))
+        meta["aux_features"] = aux_feats
+    meta["model_weights"] = model_weights
+
+    # composant gradient boosting
+    gbm = None
+    if args.gbm_weight > 0:
+        import re as _re
+        gbm_feats = select_features(X1.columns, keep=args.gbm_groups, drop="")
+        if args.gbm_drop_cols:
+            gbm_feats = [c for c in gbm_feats if not _re.search(args.gbm_drop_cols, c)]
+        Xg_tr = (pd.concat([X1, X2]) if Xva is None else (X1 if args.holdout else pd.concat([X1, X2.iloc[:int(len(X2) * args.holdout_split)]])))[gbm_feats].to_numpy()
+        t0 = time.time()
+        gbm = GBMComponent(gbm_feats).fit(Xg_tr, Ytr)
+        gbm.save(out_dir / "gbm.pkl")
+        meta["gbm_weight"] = args.gbm_weight
+        meta["gbm_features_n"] = len(gbm_feats)
+        log(json.dumps({"gbm_trained": len(gbm_feats), "time_s": round(time.time() - t0)}))
     (out_dir / "meta.json").write_text(json.dumps(meta))
 
-    preds = []
-    for s in range(args.seeds):
-        model, norm, hist = train_one(s, Xtr, Ytr, Xva, Yva, feats, targets, args, out_dir, log)
-        if Xva is not None:
-            preds.append(simulate_one(model, norm, Xva, Yva, N_INIT, init_bias=args.init_bias))
-            ens = np.mean(preds, axis=0)
-            log(json.dumps({"ensemble_size": len(preds), "val_rmse_ensemble": rmse(ens[N_INIT:], Yva[N_INIT:])}))
     if Xva is not None:
-        ens = np.mean(preds, axis=0)
-        std = np.std(preds, axis=0)
-        report = {
+        ens = np.average(preds, axis=0, weights=weights)
+        std = np.sqrt(np.average((np.stack(preds) - ens) ** 2, axis=0, weights=weights))
+        report = {"val_rmse_gru": rmse(ens[N_INIT:], Yva[N_INIT:])}
+        if gbm is not None:
+            Xg_va = (X2 if args.holdout else X2.iloc[int(len(X2) * args.holdout_split):])[gbm_feats].to_numpy()
+            pg = gbm.predict(Xg_va)
+            report["val_rmse_gbm"] = rmse(pg[N_INIT:], Yva[N_INIT:])
+            for w in [0.2, 0.3, 0.4]:
+                report[f"val_rmse_blend_{w}"] = rmse(((1 - w) * ens + w * pg)[N_INIT:], Yva[N_INIT:])
+            ens = (1 - args.gbm_weight) * ens + args.gbm_weight * pg
+        report.update({
             "val_rmse": rmse(ens[N_INIT:], Yva[N_INIT:]),
             "val_rmse_per_circuit": dict(zip(targets, rmse_per_circuit(ens[N_INIT:], Yva[N_INIT:]).round(5).tolist())),
             "val_rmse_by_week": rmse_by_horizon(ens[N_INIT:], Yva[N_INIT:]),
-        }
+        })
         (out_dir / "val_report.json").write_text(json.dumps(report, indent=1))
         pd.DataFrame(ens, index=val_index, columns=targets).to_csv(out_dir / "val_pred.csv")
         pd.DataFrame(std, index=val_index, columns=targets).to_csv(out_dir / "val_std.csv")

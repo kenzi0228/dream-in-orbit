@@ -11,7 +11,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from .features import H, build_features, build_vocab, hourly_grid, load_power_hourly
+from .features import FEATURE_VERSION, H, build_features, build_vocab, hourly_grid, load_power_hourly
 
 CACHE = Path("cache")
 
@@ -24,7 +24,7 @@ def load_period(ctx_dir: Path, vocab: dict, power_csv: Path | None = None, use_c
     """Retourne (X, y) horaires pour un dossier du kit. y = None si pas de power.csv."""
     ctx_dir = Path(ctx_dir)
     power_csv = power_csv or (ctx_dir / "power.csv")
-    key = f"{ctx_dir.name}_{_vocab_hash(vocab)}"
+    key = f"{ctx_dir.name}_v{FEATURE_VERSION}_{_vocab_hash(vocab)}"
     fx, fy = CACHE / f"{key}_X.parquet", CACHE / f"{ctx_dir.name}_y.parquet"
     if use_cache and fx.exists() and fy.exists():
         X = pd.read_parquet(fx)
@@ -63,14 +63,27 @@ def get_vocab(kit: Path, years: list[str], use_cache: bool = True) -> dict:
 
 def feature_groups(columns) -> dict[str, list[str]]:
     """Regroupe les colonnes par source (pour les ablations)."""
-    groups = {"saaf": [], "ltdata": [], "evtf": [], "ftl": [], "dmop_base": [], "dmop_switch": [], "dmop_cmd": []}
+    groups = {"saaf": [], "ltdata": [], "evtf": [], "ftl": [], "dmop_base": [], "dmop_switch": [], "dmop_cmd": [],
+              "dmop_prefix_rec": [], "dmop_stem_rec": [], "flux": [], "hist": [], "leadlag": [], "roll": []}
     for c in columns:
         if c.startswith("dm_s_"):
             groups["dmop_switch"].append(c)
         elif c.startswith("dm_c_") or c.startswith("dm_r_"):
             groups["dmop_cmd"].append(c)
+        elif c.startswith("dm_pr_"):
+            groups["dmop_prefix_rec"].append(c)
+        elif c.startswith("dm_st_"):
+            groups["dmop_stem_rec"].append(c)
         elif c.startswith("dm_"):
             groups["dmop_base"].append(c)
+        elif c.startswith("fx_"):
+            groups["flux"].append(c)
+        elif c.startswith("hist_"):
+            groups["hist"].append(c)
+        elif c.startswith("ll_"):
+            groups["leadlag"].append(c)
+        elif c.startswith("roll_"):
+            groups["roll"].append(c)
         elif c.startswith("saaf_"):
             groups["saaf"].append(c)
         elif c.startswith("lt_"):
@@ -90,7 +103,7 @@ def select_features(columns, keep: str = "", drop: str = "") -> list[str]:
     def expand(spec):
         out = []
         for g in [x for x in spec.split(",") if x]:
-            out += ["dmop_base", "dmop_switch", "dmop_cmd"] if g == "dmop" else [g]
+            out += ["dmop_base", "dmop_switch", "dmop_cmd", "dmop_prefix_rec", "dmop_stem_rec"] if g == "dmop" else [g]
         return out
 
     kept = expand(keep) or list(groups)

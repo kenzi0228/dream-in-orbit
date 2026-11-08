@@ -26,8 +26,8 @@ from dio.simulate import load_ensemble, simulate_ensemble
 N_INIT = 24 * 7
 
 
-def energy(models, X, Y_init, n_init):
-    mean, std, _ = simulate_ensemble(models, X, Y_init, n_init)
+def energy(models, Xdf, Y_init, n_init, gbm=None):
+    mean, std, _ = simulate_ensemble(models, Xdf, Y_init, n_init, gbm=gbm)
     return float(mean[n_init:].sum()), float(np.sqrt((std[n_init:] ** 2).sum()))
 
 
@@ -46,17 +46,22 @@ def main():
     vocab = get_vocab(Path(a.kit), ["annee1", "annee2"])
     X2, Y2 = load_period(Path(a.kit) / "annee2", vocab)
     feats = meta["features"]
+    gbm = meta.get("gbm")
     a0 = a.start_day * 24
     sl = slice(a0, a0 + N_INIT + a.days * 24)
-    Xw = X2.iloc[sl][feats].copy()
+    Xw = X2.iloc[sl].copy()  # toutes les colonnes ; GRU et GBM y prennent les leurs
     Yw = Y2.iloc[sl][meta["targets"]].to_numpy()
-    base_e, base_u = energy(models, Xw.to_numpy(), Yw, N_INIT)
+
+    def energy_df(Xdf):
+        return energy(models, Xdf, Yw, N_INIT, gbm=gbm)
+
+    base_e, base_u = energy_df(Xw)
     truth_e = float(np.nansum(Yw[N_INIT:]))
     res = {"fenetre": {"debut": str(pd.to_datetime(Xw.index[N_INIT], unit="ms")), "jours": a.days},
            "energie_reelle_somme_horaire": truth_e, "planning_reel_simule": {"energie": base_e, "incertitude": base_u}}
     print(json.dumps(res, indent=1), flush=True)
 
-    ftl_cols = [c for c in feats if c.startswith("ftl_") and c not in ("ftl_comms", "ftl_n_switch", "ftl_other")]
+    ftl_cols = [c for c in Xw.columns if c.startswith("ftl_") and c not in ("ftl_comms", "ftl_n_switch", "ftl_other")]
     comms = Xw["ftl_comms"].to_numpy()
     free = np.where(comms[N_INIT:] == 0)[0] + N_INIT  # heures sans communication : modifiables
 
@@ -66,20 +71,21 @@ def main():
     Xs = Xw.copy()
     for c in ftl_cols:
         Xs.iloc[free, Xs.columns.get_loc(c)] = 1.0 if c == "ftl_EARTH" else 0.0
-    scen["hors_comms_tout_EARTH"] = energy(models, Xs.to_numpy(), Yw, N_INIT)
+    scen["hors_comms_tout_EARTH"] = energy_df(Xs)
     # 2. hors communication, tout le pointage devient NADIR (observation continue)
     if "ftl_NADIR" in ftl_cols:
         Xs = Xw.copy()
         for c in ftl_cols:
             Xs.iloc[free, Xs.columns.get_loc(c)] = 1.0 if c == "ftl_NADIR" else 0.0
-        scen["hors_comms_tout_NADIR"] = energy(models, Xs.to_numpy(), Yw, N_INIT)
+        scen["hors_comms_tout_NADIR"] = energy_df(Xs)
     # 3. aucune commande dmop hors communication (seulement si le modele lit les commandes)
-    dm_cols = [c for c in feats if c.startswith("dm_c_") or c.startswith("dm_p_") or c == "dm_total"]
+    all_feats = list(feats) + (list(gbm[0].features) if gbm else [])
+    dm_cols = sorted({c for c in all_feats if c.startswith("dm_c_") or c.startswith("dm_p_") or c == "dm_total"})
     if dm_cols:
         Xs = Xw.copy()
         for c in dm_cols:
             Xs.iloc[free, Xs.columns.get_loc(c)] = 0.0
-        scen["hors_comms_sans_commandes"] = energy(models, Xs.to_numpy(), Yw, N_INIT)
+        scen["hors_comms_sans_commandes"] = energy_df(Xs)
     # 4. pas de manoeuvre (SLEW) hors communication : le temps de SLEW est rendu a EARTH
     if "ftl_SLEW" in ftl_cols:
         Xs = Xw.copy()
@@ -87,7 +93,7 @@ def main():
         e_ = Xs.columns.get_loc("ftl_EARTH")
         Xs.iloc[free, e_] = Xs.iloc[free, e_].to_numpy() + Xs.iloc[free, sl_].to_numpy()
         Xs.iloc[free, sl_] = 0.0
-        scen["hors_comms_sans_manoeuvres"] = energy(models, Xs.to_numpy(), Yw, N_INIT)
+        scen["hors_comms_sans_manoeuvres"] = energy_df(Xs)
     res["scenarios"] = {k: {"energie": e, "incertitude": u, "ecart_pct": 100 * (e - base_e) / base_e} for k, (e, u) in scen.items()}
     print(json.dumps(res["scenarios"], indent=1), flush=True)
 
@@ -109,7 +115,7 @@ def main():
             continue
         cand.iloc[i, cols_idx] = vj
         cand.iloc[j, cols_idx] = vi
-        e, _ = energy(models, cand.to_numpy(), Yw, N_INIT)
+        e, _ = energy_df(cand)
         if e < best_e:
             best, best_e = cand, e
             hist.append((it, e))
