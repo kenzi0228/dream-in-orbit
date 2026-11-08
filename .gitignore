@@ -10,3 +10,6 @@ __pycache__/
 .DS_Store
 kit_etudiants/annee1/
 kit_etudiants/annee2/
+reports/*.pred.csv
+!reports/baselines.pred.csv
+reports/blend_weights_per_circuit_*.csv
