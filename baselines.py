@@ -31,11 +31,15 @@ def main():
     ap.add_argument("--out", default="reports/baselines.json")
     ap.add_argument("--max-iter", type=int, default=300)
     ap.add_argument("--split", type=float, default=0.0, help="validation chronologique : train = annee1 + fraction de annee2")
+    ap.add_argument("--reverse", action="store_true", help="protocole inverse : train annee2, test annee1")
+    ap.add_argument("--no-gbm", action="store_true", help="references naives seulement (constante, persistance)")
     a = ap.parse_args()
     kit = Path(a.kit)
     vocab = get_vocab(kit, ["annee1", "annee2"])
     X1, Y1 = load_period(kit / "annee1", vocab)
     X2, Y2 = load_period(kit / "annee2", vocab)
+    if a.reverse:
+        X1, Y1, X2, Y2 = X2, Y2, X1, Y1
     targets = list(Y1.columns)
     if a.split > 0:
         k = int(len(X2) * a.split)
@@ -52,6 +56,10 @@ def main():
     persist = np.tile(pd.DataFrame(Yte[:N_INIT]).ffill().to_numpy()[-1], (len(Yte_eval), 1))
     res["persistance_derniere_heure"] = rmse(persist, Yte_eval)
     print(json.dumps(res, indent=1), flush=True)
+    if a.no_gbm:
+        Path(a.out).parent.mkdir(parents=True, exist_ok=True)
+        Path(a.out).write_text(json.dumps(res, indent=1))
+        return
 
     t0 = time.time()
     mtr = ~np.isnan(Ytr).any(axis=1)

@@ -1,22 +1,22 @@
-# Dream in Orbit — un world model de la consommation électrique de Mars Express
+# Dream in Orbit — simuler la consommation électrique de Mars Express
 
-Un GRU apprend, sur les données de télémétrie du kit (deux années martiennes), comment
-la consommation des 33 circuits réagit au planning (commandes, pointages) et au contexte
-(Soleil, éclipses, distances). Il simule ensuite seul, heure par heure, une période
-entière à partir de ses 7 premiers jours réels :
+Un ensemble de cinq GRU apprend, sur la télémétrie du kit (deux années martiennes), comment la
+consommation des 33 circuits réagit au planning (commandes, pointages) et au contexte (Soleil,
+éclipses, saison). Il simule ensuite seul, heure par heure, une période entière à partir de ses
+7 premiers jours réels :
 
-    état_{t-1} + actions_t + contexte_t  --(GRU)-->  état_t
+    état_{t-1} + actions_t + contexte_t  --(GRU, mémoire h_t)-->  état_t
 
-La prédiction est la moyenne d'un ensemble de 5 GRU (Deep Ensembles, leur écart-type donne
-l'incertitude), mélangée à parts égales avec un composant gradient boosting heure par heure
-(`dio/gbm.py`, 5 sacs temporels). Les deux modèles font des erreurs peu corrélées, et le
-mélange gagne 0,003 à 0,005 de RMSE dans les deux protocoles de validation.
-`python train.py --gbm-weight 0` donne la version réseau de neurones pur.
+La prédiction livrée est la moyenne des cinq GRU, mélangée à parts égales avec un composant
+gradient boosting heure par heure (`dio/gbm.py`, 5 sacs temporels, déterministe). Les deux
+familles de modèles font des erreurs peu corrélées (0,8) et le mélange bat chacune d'elles dans
+les trois protocoles de validation (0,005 à 0,008 de RMSE de mieux que l'ensemble de GRU seul).
+`python train.py --combine none` donne la version réseau de neurones pur.
 
-Les commandes dmop sont lues **sans leur lettre de variante** (`AXXX301A` et `AXXX301C`
-sont la même commande) : les lettres changent d'une année martienne à l'autre pour 20 des
-29 interrupteurs, et tout ce qui est appris par lettre est perdu l'année suivante
-(`RAPPORT.md`, § 8).
+Les commandes dmop sont lues **sans leur lettre de variante** (`AXXX301A` et `AXXX301C` sont la
+même commande) : les lettres changent d'une année martienne à l'autre pour 20 des 29
+interrupteurs, et tout ce qui est appris par lettre est perdu l'année suivante (`RAPPORT.md`, § 8).
+Le vocabulaire des features est appris sur la période d'entraînement seule.
 
 ## Installation
 
@@ -31,11 +31,11 @@ Le kit doit se trouver dans `kit_etudiants/` (`annee1/`, `annee2/`, `make_valida
 ## Utilisation
 
 ```bash
-# Entraîne tout (annee1 + annee2) et écrit les poids dans weights/
+# Entraîne tout (annee1 + annee2) et écrit les poids dans weights/   (~70 min sur 6 cœurs)
 .venv/bin/python train.py
 
-# Simule une période de test au format de l'évaluation
-.venv/bin/python predict.py --test_dir DOSSIER --out predictions.csv
+# Simule une période de test au format de l'évaluation (+ incertitude calibrée, optionnelle)
+.venv/bin/python predict.py --test_dir DOSSIER --out predictions.csv [--std_out incertitude.csv]
 ```
 
 Validation dans les conditions exactes de l'évaluation (entraînement sur annee1 seulement) :
@@ -47,63 +47,58 @@ cd kit_etudiants && ../.venv/bin/python make_validation.py --annee annee2 --out 
 .venv/bin/python kit_etudiants/evaluate.py --pred pred.csv --verite validation/verite_horaire.csv --heures validation/test/heures_a_predire.csv
 ```
 
-Autres scripts :
+`train.py --holdout-reverse` (annee2 → annee1) et `train.py --holdout-split 0.5` (deux ans →
+½ annee2) sont les deux autres protocoles du rapport.
 
-| Script | Rôle |
-|---|---|
-| `baselines.py` | prédiction constante, persistance, gradient boosting heure par heure |
-| `ablations.py` | ré-entraîne le world model sans tel ou tel groupe de features / sans mémoire / sans ré-injection |
-| `demo.py` | figures « rêve contre réalité », courbe de dérive, erreur par circuit, calibration de l'incertitude |
-| `pilot.py` | bonus : utilise le simulateur pour comparer des plannings alternatifs |
+## Résultats (RMSE de simulation, 7 jours réels puis rêve sur toute la période)
+
+| Modèle | strict (annee1 → annee2) | inversé (annee2 → annee1) | chronologique (2 ans → ½ annee2) |
+|---|---|---|---|
+| Constante | 0,106 | 0,125 | 0,105 |
+| Gradient boosting seul (5 sacs, sans lettre) | 0,0792 | 0,0908 | 0,0816 |
+| Ensemble de GRU seul | 0,0796 | 0,0952 | 0,0884 |
+| **World model livré (0,5 GRU + 0,5 GBM)** | **0,0750** | **0,0901** | **0,0805** |
+
+Flux officiel (`predict.py` → `evaluate.py`, poids `weights_holdout`) : 0,074968. Le protocole
+inversé n'a servi à aucune décision de conception : il mesure l'optimisme de sélection des deux
+autres. L'incertitude livrée (`--std_out`) est l'écart-type de l'ensemble calibré par circuit
+(`calibrate.py`, `weights/calibration.json`), vérifié d'une année de test sur l'autre.
+
+Le modèle livré dans `weights/` (5 fichiers `model_k.pt`, 3 Mo ; `gbm.pkl`, le composant gradient
+boosting compressé, 45 Mo ; `meta.json`, vocabulaire et liste des features ; `calibration.json`)
+est entraîné sur annee1 + annee2. La seule estimation honnête de sa RMSE est celle des trois
+protocoles ci-dessus : attendez-vous à 0,0805-0,0901 sur une année nouvelle. Deux circuits de
+chauffage font 63 % de l'erreur, et leur décrochage de 2011 coïncide avec un trou de 14 jours dans
+le fichier de commandes (`RAPPORT.md`, § 5).
 
 ## Organisation du code
 
 | Fichier | Contenu |
 |---|---|
-| `dio/features.py` | alignement des 5 fichiers de contexte sur la grille horaire (fiches des données dans `RAPPORT.md`) |
+| `train.py` | entraînement en une commande ; protocoles `--holdout`, `--holdout-reverse`, `--holdout-split` ; `--combine blend|none|stack` |
+| `predict.py` | interface officielle (+ `--std_out`, incertitude calibrée) |
+| `calibrate.py` | facteurs d'échelle de l'incertitude par circuit, ajustés sur une validation, vérifiés sur les autres |
+| `dio/features.py` | alignement des 5 fichiers de contexte sur la grille horaire, vocabulaire appris sur l'entraînement (fiches dans `RAPPORT.md`) |
 | `dio/data.py` | chargement avec cache (`cache/`), groupes de features |
 | `dio/model.py` | le world model GRU (teacher forcing, rollout avec scheduled sampling), normalisation |
-| `dio/simulate.py` | simulation d'une période avec un ensemble de modèles (GRU pondérés + composant GBM) |
-| `dio/gbm.py` | le composant gradient boosting (un modèle sklearn par circuit, déterministe) |
-| `experiments/` | harnais d'expériences bi-protocole (`sweep.py`), jeux de features et hyperparamètres du GBM (`gbm_sets.py`), re-mélange hors ligne (`reblend_sets.py`), analyses d'erreurs (`analyse_*.py`) ; résultats dans `reports/experiments.csv`, `reports/gbm_*.json`, `reports/analyse_erreurs.json` |
-| `run_all.sh` | relance toute la chaîne de livrables (validations, flux officiel, modèle final, démo, pilote, ablations) |
-| `dio/metrics.py` | RMSE identique à `evaluate.py`, RMSE par circuit et par horizon |
-| `train.py` | entraînement en une commande (ensemble de 5 GRU) |
-| `predict.py` | interface officielle |
-
-Le rapport (fiches des données, ablations, dérive, analyse des erreurs) est dans `RAPPORT.md`,
-les figures dans `reports/figures/`.
-
-## Résultats (RMSE de simulation sur annee2, après entraînement sur annee1 seule)
-
-| Modèle | RMSE strict (annee1 → annee2) | RMSE chrono (2 ans → ½ annee2) |
-|---|---|---|
-| Constante | 0,106 | 0,105 |
-| Gradient boosting seul (commandes sans lettre, 5 sacs temporels) | 0,079 | 0,082 |
-| Ensemble de 5 GRU seul (physique + comptes de commandes) | 0,080 | 0,090 |
-| World model de la deuxième semaine (0,55 GRU + 0,45 GBM, commandes par lettre) | 0,078 | 0,083 |
-| **World model livré (0,5 GRU + 0,5 GBM)** | **0,075** | **0,081** |
-
-Le modèle livré dans `weights/` (5 fichiers `model_k.pt`, 3 Mo au total, `gbm.pkl`, le
-composant gradient boosting compressé, 44 Mo, et `meta.json` qui contient le vocabulaire et
-la liste des features) est entraîné sur annee1 + annee2 (`python train.py`, 80 époques par
-GRU puis 5 sacs de gradient boosting, ~70 min sur un portable 6 cœurs, CPU).
-La seule estimation honnête de sa RMSE est celle de `weights_holdout` (0,075 en strict,
-0,075095 par le flux officiel `predict.py` → `evaluate.py`) et de `weights_holdout_split`
-(0,081 en chronologique à deux ans). Le GRU lit les features physiques (Soleil, ombre,
-orbite, pointage, constante solaire, durées d'éclipse) et les comptes horaires de commandes
-par stem, sans lettre de variante ; les interrupteurs codés par lettre et les colonnes
-« calendrier » de ltdata dégradent la généralisation d'une année à l'autre (détails et
-ablations dans le rapport).
+| `dio/gbm.py` | le composant gradient boosting (sacs temporels, prédictions hors-échantillon, cache) |
+| `dio/simulate.py` | simulation d'une période avec l'ensemble (membres, moyenne, écart-type) |
+| `dio/metrics.py` | RMSE identique à `evaluate.py`, par circuit, par horizon |
+| `baselines.py` | constante, persistance, gradient boosting heure par heure |
+| `ablations.py` | ré-entraîne le GRU sans tel ou tel ingrédient (`reports/ablations.md`) |
+| `demo.py` | figures « rêve contre réalité », dérive, erreur par circuit, calibration (`reports/figures/`) |
+| `pilot.py` | bonus : comparaison appariée de plannings alternatifs (`reports/pilot.json`) |
+| `experiments/` | harnais d'expériences et analyses (voir `experiments/README.md`) |
+| `tests/` | tests unitaires des features et test de bout en bout `train.py` → `predict.py` |
+| `run_all.sh` | relance toute la chaîne de livrables (~4 h sur 6 cœurs) |
 
 ## Reproduire le rapport
 
 ```bash
-.venv/bin/python baselines.py                       # reports/baselines.json
-.venv/bin/python train.py --holdout --seeds 5       # weights_holdout/ (validation stricte)
-.venv/bin/python demo.py --weights weights_holdout  # reports/figures/
-.venv/bin/python ablations.py --seeds 1             # reports/ablations.json + .md (~1 h 15)
-.venv/bin/python pilot.py --weights weights_holdout --start-day 100 --days 14 --iters 120
-.venv/bin/python tests/test_features.py             # tests unitaires des features
-./run_all.sh 6                                      # validations strict et chrono, flux officiel, modèle final, démo, pilote (~3 h 30)
+./run_all.sh 6
 ```
+
+soit, dans l'ordre : les trois validations, le flux officiel, la calibration, le modèle final,
+la démo, le pilote, les ablations, les tableaux du rapport, le diagnostic de NPWD2551 et les tests.
+Chaque étape est aussi une commande seule (voir le tableau ci-dessus) ; `python tests/test_features.py`
+et `python tests/test_predict_smoke.py` lancent les tests.

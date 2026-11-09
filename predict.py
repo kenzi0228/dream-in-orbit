@@ -6,16 +6,20 @@ Simule la consommation horaire des 33 circuits sur une periode de test.
 DOSSIER contient dmop.csv, evtf.csv, ftl.csv, saaf.csv, ltdata.csv, power_init.csv (7 premiers
 jours) et heures_a_predire.csv. La sortie a une colonne ut_ms et les 33 colonnes NPWDxxxx,
 une ligne par heure demandee, sans valeur manquante.
+
+--std_out : ecart-type de l'ensemble, multiplie par les facteurs de calibration par circuit de
+weights/calibration.json s'il existe (ajustes sur une validation, voir calibrate.py).
 """
 from __future__ import annotations
 
 import argparse
+import json
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-from dio.features import H, build_features, hourly_grid, load_power_hourly
+from dio.features import build_features, hourly_grid, load_power_hourly
 from dio.simulate import load_ensemble, simulate_ensemble
 
 
@@ -48,9 +52,14 @@ def main():
     pred.to_csv(a.out)
     if a.std_out:
         s = pd.DataFrame(std, index=grid, columns=meta["targets"]).reindex(heures).fillna(0.0)
+        cal = Path(a.weights) / "calibration.json"
+        if cal.exists():
+            scale = json.loads(cal.read_text())["scale"]
+            s = s * pd.Series(scale).reindex(s.columns).fillna(1.0)
         s.index.name = "ut_ms"
         s.to_csv(a.std_out)
-    print(f"{len(pred)} heures predites avec {len(models)} GRU" + (" + gradient boosting" if meta.get("gbm") else "") + f" -> {a.out}")
+    mode = {"stack": "GRU empile sur gradient boosting", "blend": "GRU + gradient boosting (melange)", "none": "GRU"}[meta.get("combine", "blend" if meta.get("gbm") else "none")]
+    print(f"{len(pred)} heures predites avec {len(models)} {mode} -> {a.out}")
 
 
 if __name__ == "__main__":

@@ -1,0 +1,595 @@
+{
+ "semaines_biais_sup_0_10": {
+  "20": 0.112,
+  "21": 0.116,
+  "27": 0.166,
+  "28": 0.171,
+  "29": 0.14,
+  "55": 0.151,
+  "59": 0.211,
+  "60": 0.133,
+  "61": 0.217,
+  "62": 0.174,
+  "63": 0.237,
+  "64": 0.325,
+  "65": 0.453,
+  "66": 0.294,
+  "67": 0.258,
+  "68": 0.267,
+  "78": 0.234,
+  "79": 0.269,
+  "80": 0.129,
+  "96": 0.145,
+  "97": 0.154
+ },
+ "fenetre_anormale": {
+  "debut": "2010-12-04",
+  "fin": "2012-05-26",
+  "biais_moyen": 0.051
+ },
+ "npwd2551_par_umbra_saison2": {
+  "(-0.001, 0.0]": {
+   "mean_a1": 0.396,
+   "count_a1": 1889.0,
+   "mean_a2": 0.411,
+   "count_a2": 1515.0,
+   "ecart_a2_moins_a1": 0.015
+  },
+  "(0.0, 0.1]": {
+   "mean_a1": 0.975,
+   "count_a1": 29.0,
+   "mean_a2": 0.53,
+   "count_a2": 73.0,
+   "ecart_a2_moins_a1": -0.446
+  },
+  "(0.1, 0.3]": {
+   "mean_a1": 0.984,
+   "count_a1": 65.0,
+   "mean_a2": 0.607,
+   "count_a2": 117.0,
+   "ecart_a2_moins_a1": -0.377
+  },
+  "(0.3, 0.6]": {
+   "mean_a1": 0.852,
+   "count_a1": 92.0,
+   "mean_a2": 0.55,
+   "count_a2": 177.0,
+   "ecart_a2_moins_a1": -0.302
+  },
+  "(0.6, 1.0]": {
+   "mean_a1": 0.734,
+   "count_a1": 85.0,
+   "mean_a2": 0.855,
+   "count_a2": 79.0,
+   "ecart_a2_moins_a1": 0.121
+  }
+ },
+ "umbra_moyen_saison2": {
+  "annee1": 0.0553,
+  "annee2": 0.0836
+ },
+ "colonnes_les_plus_differentes": [
+  {
+   "colonne": "ev_orbit_period_h",
+   "moyenne_a1": 6.8958,
+   "moyenne_a2": 6.9948,
+   "d_standardise": 119.5426
+  },
+  {
+   "colonne": "lt_earthmars_km",
+   "moyenne_a1": 166332404.037,
+   "moyenne_a2": 271806206.0222,
+   "d_standardise": 3.8144
+  },
+  {
+   "colonne": "lt_occultationduration_min",
+   "moyenne_a1": 57.5454,
+   "moyenne_a2": 4.9116,
+   "d_standardise": -2.9424
+  },
+  {
+   "colonne": "lt_sunmarsearthangle_deg",
+   "moyenne_a1": 36.7243,
+   "moyenne_a2": 32.7993,
+   "d_standardise": -1.1731
+  },
+  {
+   "colonne": "ev_occ_mars",
+   "moyenne_a1": 0.1386,
+   "moyenne_a2": 0.0119,
+   "d_standardise": -0.6482
+  },
+  {
+   "colonne": "ev_occ_mars_km",
+   "moyenne_a1": 0.1558,
+   "moyenne_a2": 0.0186,
+   "d_standardise": -0.6481
+  },
+  {
+   "colonne": "ftl_D4PNPO",
+   "moyenne_a1": 0.008,
+   "moyenne_a2": 0.1397,
+   "d_standardise": 0.6308
+  },
+  {
+   "colonne": "lt_eclipseduration_min",
+   "moyenne_a1": 24.0214,
+   "moyenne_a2": 35.3993,
+   "d_standardise": 0.6072
+  },
+  {
+   "colonne": "ftl_comms",
+   "moyenne_a1": 0.3757,
+   "moyenne_a2": 0.1555,
+   "d_standardise": -0.6005
+  },
+  {
+   "colonne": "saaf_cos_sz",
+   "moyenne_a1": -0.5005,
+   "moyenne_a2": -0.3445,
+   "d_standardise": 0.5263
+  },
+  {
+   "colonne": "saaf_sz",
+   "moyenne_a1": 121.7716,
+   "moyenne_a2": 111.2329,
+   "d_standardise": -0.5242
+  },
+  {
+   "colonne": "dm_p_AXXX",
+   "moyenne_a1": 0.306,
+   "moyenne_a2": 0.0556,
+   "d_standardise": -0.5237
+  },
+  {
+   "colonne": "dm_sc_AXXX305_",
+   "moyenne_a1": 0.1042,
+   "moyenne_a2": 0.0,
+   "d_standardise": -0.4822
+  },
+  {
+   "colonne": "dm_sc_AXXX380_",
+   "moyenne_a1": 0.0981,
+   "moyenne_a2": 0.0,
+   "d_standardise": -0.4357
+  },
+  {
+   "colonne": "saaf_sa_std",
+   "moyenne_a1": 3.9175,
+   "moyenne_a2": 7.715,
+   "d_standardise": 0.4084
+  },
+  {
+   "colonne": "ftl_RADIO_SCIENCE",
+   "moyenne_a1": 0.0592,
+   "moyenne_a2": 0.0,
+   "d_standardise": -0.4033
+  },
+  {
+   "colonne": "dm_p_AACF",
+   "moyenne_a1": 0.0,
+   "moyenne_a2": 0.7787,
+   "d_standardise": 0.3736
+  },
+  {
+   "colonne": "dm_sc_APSF35_1",
+   "moyenne_a1": 0.0,
+   "moyenne_a2": 0.0634,
+   "d_standardise": 0.368
+  },
+  {
+   "colonne": "saaf_cos_sa",
+   "moyenne_a1": 0.9733,
+   "moyenne_a2": 0.9381,
+   "d_standardise": -0.3581
+  },
+  {
+   "colonne": "saaf_sa",
+   "moyenne_a1": 5.1267,
+   "moyenne_a2": 9.4452,
+   "d_standardise": 0.3576
+  },
+  {
+   "colonne": "dm_sc_AACFE03_",
+   "moyenne_a1": 0.0,
+   "moyenne_a2": 0.3588,
+   "d_standardise": 0.3574
+  },
+  {
+   "colonne": "ftl_ACROSS_TRACK",
+   "moyenne_a1": 0.0435,
+   "moyenne_a2": 0.0005,
+   "d_standardise": -0.356
+  },
+  {
+   "colonne": "dm_sc_AACFE05_",
+   "moyenne_a1": 0.0,
+   "moyenne_a2": 0.0773,
+   "d_standardise": 0.354
+  },
+  {
+   "colonne": "saaf_sx",
+   "moyenne_a1": 38.1454,
+   "moyenne_a2": 33.3503,
+   "d_standardise": -0.3509
+  },
+  {
+   "colonne": "dm_sc_AACFE91_",
+   "moyenne_a1": 0.0,
+   "moyenne_a2": 0.1676,
+   "d_standardise": 0.3481
+  }
+ ],
+ "circuits_qui_changent_de_niveau_saison2": [
+  {
+   "circuit": "NPWD2551",
+   "hors_umbra_a1": 0.396,
+   "hors_umbra_a2": 0.411,
+   "hors_umbra_ecart": 0.015,
+   "umbra_sup_0_3_a1": 0.795,
+   "umbra_sup_0_3_a2": 0.644,
+   "umbra_sup_0_3_ecart": -0.151
+  },
+  {
+   "circuit": "NPWD2851",
+   "hors_umbra_a1": 0.21,
+   "hors_umbra_a2": 0.329,
+   "hors_umbra_ecart": 0.119,
+   "umbra_sup_0_3_a1": 0.272,
+   "umbra_sup_0_3_a2": 0.383,
+   "umbra_sup_0_3_ecart": 0.11
+  },
+  {
+   "circuit": "NPWD2451",
+   "hors_umbra_a1": 0.636,
+   "hors_umbra_a2": 0.645,
+   "hors_umbra_ecart": 0.009,
+   "umbra_sup_0_3_a1": 0.675,
+   "umbra_sup_0_3_a2": 0.565,
+   "umbra_sup_0_3_ecart": -0.109
+  },
+  {
+   "circuit": "NPWD2532",
+   "hors_umbra_a1": 1.047,
+   "hors_umbra_a2": 1.228,
+   "hors_umbra_ecart": 0.18,
+   "umbra_sup_0_3_a1": 1.233,
+   "umbra_sup_0_3_a2": 1.291,
+   "umbra_sup_0_3_ecart": 0.058
+  },
+  {
+   "circuit": "NPWD2742",
+   "hors_umbra_a1": 0.004,
+   "hors_umbra_a2": 0.067,
+   "hors_umbra_ecart": 0.062,
+   "umbra_sup_0_3_a1": 0.008,
+   "umbra_sup_0_3_a2": 0.059,
+   "umbra_sup_0_3_ecart": 0.051
+  },
+  {
+   "circuit": "NPWD2561",
+   "hors_umbra_a1": 0.275,
+   "hors_umbra_a2": 0.333,
+   "hors_umbra_ecart": 0.058,
+   "umbra_sup_0_3_a1": 0.376,
+   "umbra_sup_0_3_a2": 0.341,
+   "umbra_sup_0_3_ecart": -0.035
+  },
+  {
+   "circuit": "NPWD2372",
+   "hors_umbra_a1": 0.104,
+   "hors_umbra_a2": 0.129,
+   "hors_umbra_ecart": 0.025,
+   "umbra_sup_0_3_a1": 0.132,
+   "umbra_sup_0_3_a2": 0.159,
+   "umbra_sup_0_3_ecart": 0.028
+  },
+  {
+   "circuit": "NPWD2491",
+   "hors_umbra_a1": 0.182,
+   "hors_umbra_a2": 0.189,
+   "hors_umbra_ecart": 0.007,
+   "umbra_sup_0_3_a1": 0.219,
+   "umbra_sup_0_3_a2": 0.193,
+   "umbra_sup_0_3_ecart": -0.027
+  },
+  {
+   "circuit": "NPWD2791",
+   "hors_umbra_a1": 0.098,
+   "hors_umbra_a2": 0.104,
+   "hors_umbra_ecart": 0.006,
+   "umbra_sup_0_3_a1": 0.167,
+   "umbra_sup_0_3_a2": 0.141,
+   "umbra_sup_0_3_ecart": -0.026
+  },
+  {
+   "circuit": "NPWD2721",
+   "hors_umbra_a1": 0.09,
+   "hors_umbra_a2": 0.101,
+   "hors_umbra_ecart": 0.011,
+   "umbra_sup_0_3_a1": 0.157,
+   "umbra_sup_0_3_a2": 0.176,
+   "umbra_sup_0_3_ecart": 0.019
+  }
+ ],
+ "rupture": {
+  "reference_annee1_umbra_sup_0_3": 0.795,
+  "jour": "2011-09-02"
+ },
+ "stems_concentres_autour_de_la_rupture": [],
+ "evenements_evtf_autour_de_la_rupture": {
+  "#_KM_ASCEND": 53,
+  "#_KM_DESCEND": 52,
+  "MRB_AOS_#": 17,
+  "MRB_LOS_#": 15,
+  "APOCENTRE_PASSAGE_#": 14,
+  "OCC_MARS_#KM_END_/_RA_#.#_/_DE_#.#_/_OMP_(#.#,#.#)_/_SZA_#": 13,
+  "MRB_/_RANGE_#KM_END": 13,
+  "MAR_PENUMBRA_END": 13,
+  "MAR_UMBRA_END": 13,
+  "MRB_/_RANGE_#KM_START": 13,
+  "PERICENTRE_PASSAGE_#_/_SSP_(#.#,#.#)_/_SZA_#": 13,
+  "MAR_UMBRA_START": 13,
+  "MAR_PENUMBRA_START": 13,
+  "BLK_LOS_#_/_RTLT_#": 12,
+  "KLZ_LOS_#_/_RTLT_#": 12
+ },
+ "planning": {
+  "annee1": {
+   "trous_dmop_sup_24h": [
+    {
+     "debut": "2009-02-02",
+     "jours": 6.9
+    },
+    {
+     "debut": "2009-03-29",
+     "jours": 7.5
+    },
+    {
+     "debut": "2009-06-16",
+     "jours": 6.1
+    },
+    {
+     "debut": "2009-07-05",
+     "jours": 6.9
+    },
+    {
+     "debut": "2009-08-31",
+     "jours": 6.4
+    },
+    {
+     "debut": "2009-10-11",
+     "jours": 14.9
+    },
+    {
+     "debut": "2009-11-16",
+     "jours": 7.5
+    }
+   ],
+   "heures_D4PNPO": 658,
+   "commandes_AACF": 0
+  },
+  "annee2": {
+   "trous_dmop_sup_24h": [
+    {
+     "debut": "2010-09-12",
+     "jours": 7.0
+    },
+    {
+     "debut": "2010-11-28",
+     "jours": 15.2
+    },
+    {
+     "debut": "2011-01-16",
+     "jours": 34.4
+    },
+    {
+     "debut": "2011-07-25",
+     "jours": 7.0
+    },
+    {
+     "debut": "2011-08-29",
+     "jours": 13.8
+    },
+    {
+     "debut": "2011-10-10",
+     "jours": 35.0
+    },
+    {
+     "debut": "2011-12-12",
+     "jours": 7.0
+    },
+    {
+     "debut": "2012-01-09",
+     "jours": 6.7
+    }
+   ],
+   "heures_D4PNPO": 1958,
+   "commandes_AACF": 5825
+  }
+ },
+ "journalier_autour_rupture": {
+  "2011-08-25": {
+   "NPWD2551": 0.7599999904632568,
+   "umbra": 0.11599999666213989,
+   "D4PNPO": 0.054999999701976776,
+   "comms": 0.4059999883174896,
+   "commandes_par_h": 6.583000183105469
+  },
+  "2011-08-26": {
+   "NPWD2551": 0.7699999809265137,
+   "umbra": 0.10499999672174454,
+   "D4PNPO": 0.14399999380111694,
+   "comms": 0.42100000381469727,
+   "commandes_par_h": 7.75
+  },
+  "2011-08-27": {
+   "NPWD2551": 0.7979999780654907,
+   "umbra": 0.09399999678134918,
+   "D4PNPO": 0.11500000208616257,
+   "comms": 0.5049999952316284,
+   "commandes_par_h": 6.583000183105469
+  },
+  "2011-08-28": {
+   "NPWD2551": 0.9980000257492065,
+   "umbra": 0.125,
+   "D4PNPO": 0.19099999964237213,
+   "comms": 0.2370000034570694,
+   "commandes_par_h": 8.416999816894531
+  },
+  "2011-08-29": {
+   "NPWD2551": 0.7839999794960022,
+   "umbra": 0.09300000220537186,
+   "D4PNPO": 0.09200000017881393,
+   "comms": 0.37299999594688416,
+   "commandes_par_h": 2.5829999446868896
+  },
+  "2011-08-30": {
+   "NPWD2551": 0.3970000147819519,
+   "umbra": 0.12300000339746475,
+   "D4PNPO": 0.14399999380111694,
+   "comms": 0.4090000092983246,
+   "commandes_par_h": 0.0
+  },
+  "2011-08-31": {
+   "NPWD2551": 0.5619999766349792,
+   "umbra": 0.09200000017881393,
+   "D4PNPO": 0.10999999940395355,
+   "comms": 0.4880000054836273,
+   "commandes_par_h": 0.0
+  },
+  "2011-09-01": {
+   "NPWD2551": 0.5519999861717224,
+   "umbra": 0.11599999666213989,
+   "D4PNPO": 0.061000000685453415,
+   "comms": 0.35499998927116394,
+   "commandes_par_h": 0.0
+  },
+  "2011-09-02": {
+   "NPWD2551": 0.6150000095367432,
+   "umbra": 0.09700000286102295,
+   "D4PNPO": 0.10499999672174454,
+   "comms": 0.41600000858306885,
+   "commandes_par_h": 0.0
+  },
+  "2011-09-03": {
+   "NPWD2551": 0.32499998807907104,
+   "umbra": 0.09000000357627869,
+   "D4PNPO": 0.14100000262260437,
+   "comms": 0.4300000071525574,
+   "commandes_par_h": 0.0
+  },
+  "2011-09-04": {
+   "NPWD2551": 0.41999998688697815,
+   "umbra": 0.11999999731779099,
+   "D4PNPO": 0.20000000298023224,
+   "comms": 0.32600000500679016,
+   "commandes_par_h": 0.0
+  },
+  "2011-09-05": {
+   "NPWD2551": 0.2800000011920929,
+   "umbra": 0.08900000154972076,
+   "D4PNPO": 0.07800000160932541,
+   "comms": 0.42100000381469727,
+   "commandes_par_h": 0.0
+  },
+  "2011-09-06": {
+   "NPWD2551": 0.3370000123977661,
+   "umbra": 0.11800000071525574,
+   "D4PNPO": 0.17499999701976776,
+   "comms": 0.4690000116825104,
+   "commandes_par_h": 0.0
+  },
+  "2011-09-07": {
+   "NPWD2551": 0.49799999594688416,
+   "umbra": 0.08799999952316284,
+   "D4PNPO": 0.13899999856948853,
+   "comms": 0.3230000138282776,
+   "commandes_par_h": 0.0
+  },
+  "2011-09-08": {
+   "NPWD2551": 0.5339999794960022,
+   "umbra": 0.11500000208616257,
+   "D4PNPO": 0.10100000351667404,
+   "comms": 0.2840000092983246,
+   "commandes_par_h": 0.0
+  },
+  "2011-09-09": {
+   "NPWD2551": 0.5049999952316284,
+   "umbra": 0.08799999952316284,
+   "D4PNPO": 0.20000000298023224,
+   "comms": 0.30000001192092896,
+   "commandes_par_h": 0.0
+  },
+  "2011-09-10": {
+   "NPWD2551": 0.4830000102519989,
+   "umbra": 0.0860000029206276,
+   "D4PNPO": 0.1340000033378601,
+   "comms": 0.42399999499320984,
+   "commandes_par_h": 0.0
+  },
+  "2011-09-11": {
+   "NPWD2551": 0.41200000047683716,
+   "umbra": 0.11400000005960464,
+   "D4PNPO": 0.20200000703334808,
+   "comms": 0.4350000023841858,
+   "commandes_par_h": 0.0
+  }
+ },
+ "npwd2551_par_mode_en_umbra": [
+  {
+   "annee": "annee1",
+   "mode": "EARTH",
+   "NPWD2551_umbra_sup_0_3": 0.613,
+   "heures": 57
+  },
+  {
+   "annee": "annee1",
+   "mode": "INERTIAL",
+   "NPWD2551_umbra_sup_0_3": 0.873,
+   "heures": 25
+  },
+  {
+   "annee": "annee1",
+   "mode": "SLEW",
+   "NPWD2551_umbra_sup_0_3": 0.887,
+   "heures": 86
+  },
+  {
+   "annee": "annee1",
+   "mode": "WARMUP",
+   "NPWD2551_umbra_sup_0_3": 0.855,
+   "heures": 9
+  },
+  {
+   "annee": "annee2",
+   "mode": "D4PNPO",
+   "NPWD2551_umbra_sup_0_3": 0.583,
+   "heures": 100
+  },
+  {
+   "annee": "annee2",
+   "mode": "EARTH",
+   "NPWD2551_umbra_sup_0_3": 0.591,
+   "heures": 52
+  },
+  {
+   "annee": "annee2",
+   "mode": "INERTIAL",
+   "NPWD2551_umbra_sup_0_3": 0.613,
+   "heures": 43
+  },
+  {
+   "annee": "annee2",
+   "mode": "NADIR",
+   "NPWD2551_umbra_sup_0_3": 0.053,
+   "heures": 5
+  },
+  {
+   "annee": "annee2",
+   "mode": "SLEW",
+   "NPWD2551_umbra_sup_0_3": 0.793,
+   "heures": 93
+  }
+ ]
+}

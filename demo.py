@@ -1,8 +1,9 @@
 """
-Demo "reve contre realite" sur la periode de validation (annee2), avec l'incertitude de
-l'ensemble, et courbe de derive (RMSE par semaine depuis le debut du reve).
+Demo "reve contre realite" sur la periode de validation des poids (annee2 en strict, annee1 en
+inverse), avec l'incertitude de l'ensemble (calibree par circuit si --calibration est donne),
+et courbe de derive (RMSE par semaine depuis le debut du reve).
 
-    python demo.py --weights weights_holdout --out reports/figures
+    python demo.py --weights weights_holdout --calibration reports/calibration_reverse.json --out reports/figures
 """
 from __future__ import annotations
 
@@ -16,7 +17,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from dio.data import get_vocab, load_period
+from dio.data import load_period
 from dio.metrics import rmse, rmse_by_horizon, rmse_per_circuit
 
 N_INIT = 24 * 7
@@ -28,15 +29,22 @@ def main():
     ap.add_argument("--kit", default="kit_etudiants")
     ap.add_argument("--out", default="reports/figures")
     ap.add_argument("--baseline-pred", default="reports/baselines.pred.csv")
+    ap.add_argument("--calibration", default=None, help="calibration.json : facteurs d'echelle par circuit appliques a l'ecart-type")
     a = ap.parse_args()
     out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
     w = Path(a.weights)
+    meta = json.loads((w / "meta.json").read_text())
     pred = pd.read_csv(w / "val_pred.csv", index_col="ut_ms")
     std = pd.read_csv(w / "val_std.csv", index_col="ut_ms")
-    vocab = get_vocab(Path(a.kit), ["annee1", "annee2"])
-    _, truth = load_period(Path(a.kit) / "annee2", vocab)
-    truth = truth.reindex(pred.index)
+    period = {"strict": "annee2", "reverse": "annee1", "split": "annee2"}[meta.get("protocol", "strict")]
+    _, truth = load_period(Path(a.kit) / period, meta["vocab"])
+    truth = truth.reindex(pred.index)[pred.columns]
+    calib = ""
+    if a.calibration:
+        cal = json.loads(Path(a.calibration).read_text())
+        std = std * pd.Series(cal["scale"]).reindex(std.columns).fillna(1.0)
+        calib = f" ; incertitude calibree sur {cal.get('fit_on', '?')}"
     t = pd.to_datetime(pred.index, unit="ms")
     targets = list(truth.columns)
     P, T, S = pred.to_numpy(), truth.to_numpy(), std.to_numpy()
@@ -53,7 +61,7 @@ def main():
     s_tot = daily(np.sqrt((S ** 2).sum(axis=1)))
     ax.fill_between(s_tot.index, (daily(P.sum(axis=1)) - 2 * s_tot).values, (daily(P.sum(axis=1)) + 2 * s_tot).values, color="tab:red", alpha=0.2, label="±2 ecarts-types de l'ensemble")
     ax.axvline(t[N_INIT], color="gray", ls="--")
-    ax.set_title(f"Reve contre realite (moyennes journalieres) — annee2, RMSE horaire = {total:.4f}")
+    ax.set_title(f"Reve contre realite (moyennes journalieres) — {period}, RMSE horaire = {total:.4f}{calib}")
     ax.legend(loc="upper right")
     for ax, c in zip(axes[1:], top):
         j = targets.index(c)
@@ -124,12 +132,13 @@ def main():
     ax.plot([0, s.max()], [0, s.max()], color="gray", ls="--")
     ax.set_xlabel("ecart-type de l'ensemble (decile)")
     ax.set_ylabel("RMSE observe")
-    ax.set_title("L'incertitude de l'ensemble suit-elle l'erreur ?")
+    ax.set_title("L'incertitude suit-elle l'erreur ?" + (" (calibree)" if calib else " (ecart-type brut de l'ensemble)"))
     fig.tight_layout()
     fig.savefig(out / "calibration_incertitude.png", dpi=110)
 
-    summary = {"val_rmse": total, "rmse_by_week": weeks, "top_circuits": top,
-               "spearman_std_vs_abs_err": float(pd.Series(s).corr(pd.Series(e), method="spearman"))}
+    summary = {"period": period, "val_rmse": total, "rmse_by_week": weeks, "top_circuits": top, "calibration": a.calibration,
+               "spearman_std_vs_abs_err": float(pd.Series(s).corr(pd.Series(e), method="spearman")),
+               "couverture_2s": float(np.mean(e <= 2 * s))}
     (out / "demo_summary.json").write_text(json.dumps(summary, indent=1))
     print(json.dumps({k: v for k, v in summary.items() if k != "rmse_by_week"}, indent=1))
 

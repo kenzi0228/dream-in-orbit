@@ -98,8 +98,9 @@ def simulate_one(model: WorldModel, norm: Normalizer, X: np.ndarray, Y_init: np.
 def simulate_ensemble(models, Xdf: pd.DataFrame, Y_init, n_init: int, init_bias: float = 0.0,
                       adapt_steps: int = 0, adapt_lr: float = 1e-4, gbm=None):
     """
-    Moyenne ponderee et ecart-type de l'ensemble de GRU : (T, C), (T, C), puis melange avec le
-    composant gradient boosting : prediction = (1 - w) * GRU + w * GBM.
+    Prediction (T, C), incertitude (T, C) et predictions des membres (K, T, C). Avec un composant GBM :
+    empilement (prediction = GBM + residu appris par le GRU, qui lit aussi la prediction du GBM) ou
+    melange pondere (1 - w) * GRU + w * GBM.
     Xdf : DataFrame de toutes les features horaires (chaque modele y prend ses colonnes).
     models : [(modele, normalizer, poids, features)] ; gbm : (GBMComponent, w) ou None.
     """
@@ -116,13 +117,19 @@ def simulate_ensemble(models, Xdf: pd.DataFrame, Y_init, n_init: int, init_bias:
             Y_init = None if Y_init is None else Y_init - base
     preds = np.stack([simulate_one(m, n, Xdf[feats].to_numpy(), Y_init, n_init, init_bias, adapt_steps, adapt_lr, clip=not stack)
                       for m, n, _, feats in models])
+    # predictions finales de chaque membre de l'ensemble (GBM + residu en empilement, melange pondere sinon) :
+    # la moyenne est la prediction, l'ecart-type entre membres l'incertitude (epistemique) de la prediction finale
+    if gbm is None:
+        members = preds
+    elif stack:
+        members = np.clip(base[None] + preds, 0.0, None)
+    else:
+        members = (1 - wg) * preds + wg * base[None]
     w = np.array([wt for _, _, wt, _ in models], dtype=np.float64)
     w = w / w.sum()
-    mean = np.tensordot(w, preds, axes=1)
-    std = np.sqrt(np.tensordot(w, (preds - mean) ** 2, axes=1))
-    if gbm is not None:
-        mean = np.clip(base + mean, 0.0, None) if stack else (1 - wg) * mean + wg * base
-    return mean, std, preds
+    mean = np.tensordot(w, members, axes=1)
+    std = np.sqrt(np.tensordot(w, (members - mean) ** 2, axes=1))
+    return mean, std, members
 
 
 def meta_stack(models) -> bool:

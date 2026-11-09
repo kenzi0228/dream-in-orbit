@@ -218,8 +218,10 @@ def features_ftl(path: Path, grid: np.ndarray, types: list[str]) -> pd.DataFrame
     return out
 
 
-def ftl_types(path: Path) -> list[str]:
+def ftl_types(path: Path, until_ms: int | None = None) -> list[str]:
     df = pd.read_csv(path)
+    if until_ms is not None:
+        df = df[df["utb_ms"] < until_ms]
     return sorted(df["type"].astype(str).str.strip('"').unique())
 
 
@@ -249,8 +251,10 @@ def split_stem(cmd: str) -> tuple[str, str]:
     return cmd[:k] + "_" + cmd[k + 1:], cmd[k]
 
 
-def dmop_vocab(path: Path) -> dict:
+def dmop_vocab(path: Path, until_ms: int | None = None) -> dict:
     df = _read_dmop(path)
+    if until_ms is not None:
+        df = df[df["h"] < until_ms]  # vocabulaire appris sur la periode d'entrainement seulement
     plain = df[~df["cmd"].str.contains(r"\.", regex=True)]
     counts = plain["cmd"].value_counts()
     cmds = counts[counts >= MIN_COUNT_CMD].index.tolist()[:MAX_CMDS]
@@ -388,16 +392,17 @@ def features_dmop(path: Path, grid: np.ndarray, vocab: dict) -> pd.DataFrame:
 
 # --------------------------------------------------------------------------- assemblage
 
-def build_vocab(ctx_dirs: list[Path]) -> dict:
-    """Vocabulaire appris sur un ou plusieurs dossiers de contexte (union)."""
+def build_vocab(ctx_dirs: list[Path], until_ms: int | None = None) -> dict:
+    """Vocabulaire appris sur un ou plusieurs dossiers de contexte (union), limite aux heures < until_ms :
+    les noms de colonnes (commandes, stems, interrupteurs, types de pointage) ne doivent rien a la periode de test."""
     cmds, prefixes, types, switches, stems = set(), set(), set(), set(), set()
     for d in ctx_dirs:
-        v = dmop_vocab(d / "dmop.csv")
+        v = dmop_vocab(d / "dmop.csv", until_ms)
         cmds |= set(v["cmds"])
         prefixes |= set(v["prefixes"])
         switches |= {tuple(x) for x in v["switches"]}
         stems |= set(v["stems"])
-        types |= set(ftl_types(d / "ftl.csv"))
+        types |= set(ftl_types(d / "ftl.csv", until_ms))
     return {"cmds": sorted(cmds), "prefixes": sorted(prefixes), "switches": sorted(list(x) for x in switches),
             "stems": sorted(stems), "ftl_types": sorted(types)}
 
@@ -421,6 +426,20 @@ def build_features(ctx_dir: Path, grid: np.ndarray, vocab: dict) -> pd.DataFrame
 LEADLAG_COLS = ["ev_umbra", "ev_penumbra", "saaf_cos_sa", "saaf_cos_sx", "saaf_cos_sy", "saaf_cos_sz",
                 "ftl_comms", "ftl_EARTH", "ftl_SLEW", "ev_log_alt"]
 LEADLAG_SHIFTS = [-3, -2, -1, 1, 2, 3]
+
+
+DERIVED_PREFIXES = ("fx_", "hist_", "ll_", "roll_", "ewm_")
+
+
+def recompute_derived(X: pd.DataFrame) -> pd.DataFrame:
+    """Recalcule les features derivees a partir des colonnes de base (apres modification d'un planning,
+    par exemple dans le pilote) ; les colonnes et leur ordre sont conserves."""
+    base = X[[c for c in X.columns if not c.startswith(DERIVED_PREFIXES)]]
+    out = pd.concat([base, derived_features(base)], axis=1)
+    missing = [c for c in X.columns if c not in out.columns]
+    if missing:
+        raise ValueError(f"recompute_derived : colonnes derivees non recalculables : {missing[:5]}")
+    return out[X.columns]
 
 
 def derived_features(X: pd.DataFrame) -> pd.DataFrame:
