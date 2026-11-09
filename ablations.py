@@ -16,9 +16,9 @@ import subprocess
 import sys
 from pathlib import Path
 
-# Les ablations du GRU sont mesurees sur le GRU seul (--gbm-weight 0) pour rester lisibles ;
+# Les ablations du GRU sont mesurees sur le GRU seul (--combine none) pour rester lisibles ;
 # les deux premieres lignes donnent le systeme complet (GRU + composant gradient boosting) et le GRU seul.
-GRU = ["--gbm-weight", "0"]
+GRU = ["--combine", "none"]
 ABLATIONS = {
     "complet (GRU + gradient boosting)": [],
     "GRU seul (sans composant gradient boosting)": GRU,

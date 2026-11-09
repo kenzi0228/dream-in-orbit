@@ -49,16 +49,27 @@ def load_period(ctx_dir: Path, vocab: dict, power_csv: Path | None = None, use_c
     return X, y
 
 
-def get_vocab(kit: Path, years: list[str], use_cache: bool = True) -> dict:
+def get_vocab(kit: Path, years: list[str], until_ms: int | None = None, use_cache: bool = True) -> dict:
+    """Vocabulaire des commandes et des types de pointage appris sur `years` (heures < until_ms si donne) :
+    toujours la periode d'entrainement, jamais la periode de validation."""
     kit = Path(kit)
-    f = CACHE / f"vocab_v{FEATURE_VERSION}_{'_'.join(years)}.json"   # le vocabulaire depend des seuils : versionne
+    suffix = "" if until_ms is None else f"_until{int(until_ms)}"
+    f = CACHE / f"vocab_v{FEATURE_VERSION}_{'_'.join(years)}{suffix}.json"   # le vocabulaire depend des seuils : versionne
     if use_cache and f.exists():
         return json.loads(f.read_text())
-    v = build_vocab([kit / y for y in years])
+    v = build_vocab([kit / y for y in years], until_ms)
     if use_cache:
         CACHE.mkdir(exist_ok=True)
         f.write_text(json.dumps(v))
     return v
+
+
+def period_grid(ctx_dir: Path, power_csv: Path | None = None, use_cache: bool = True) -> np.ndarray:
+    """Grille horaire d'une periode (depuis power.csv, meme cache que load_period), sans calculer les features."""
+    ctx_dir = Path(ctx_dir)
+    fy = CACHE / f"{ctx_dir.name}_y.parquet"
+    y = pd.read_parquet(fy) if (use_cache and fy.exists()) else load_power_hourly(power_csv or ctx_dir / "power.csv")
+    return hourly_grid(y.index.min(), y.index.max())
 
 
 def feature_groups(columns) -> dict[str, list[str]]:
