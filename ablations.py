@@ -30,8 +30,9 @@ ABLATIONS = {
     "sans_soleil (saaf)": GRU + ["--drop-groups", "saaf"],
     "sans_tendances (ltdata)": GRU + ["--drop-groups", "ltdata"],
     "sans_pointage (ftl)": GRU + ["--drop-groups", "ftl"],
-    "avec_commandes_dmop (prefixes + interrupteurs)": GRU + ["--keep-groups", "saaf,ltdata,evtf,ftl,dmop_base,dmop_switch"],
-    "avec_toutes_commandes_dmop (560 features)": GRU + ["--keep-groups", ""],
+    "sans_comptes_commandes (dmop_stem_cnt)": GRU + ["--drop-groups", "dmop_stem_cnt"],
+    "avec_interrupteurs_par_lettre (dmop_switch)": GRU + ["--keep-groups", "saaf,ltdata,evtf,ftl,dmop_stem_cnt,dmop_switch"],
+    "avec_toutes_commandes_dmop (toutes les colonnes)": GRU + ["--keep-groups", ""],
     "avec_calendrier (distance Terre-Mars, angle Soleil-Mars-Terre)": GRU + ["--drop-cols", "^$"],
 }
 
@@ -61,6 +62,9 @@ def main():
                          "worst_circuits": dict(sorted(rep["val_rmse_per_circuit"].items(), key=lambda kv: -kv[1])[:5])}
         out.write_text(json.dumps(results, indent=1))
         print(json.dumps({name: results[name]["val_rmse"]}), flush=True)
+    # on ne garde que les ablations de la liste courante (les anciens noms disparaissent du json et du tableau)
+    results = {name: results[name] for name in ABLATIONS if name in results}
+    out.write_text(json.dumps(results, indent=1))
     base = results.get("GRU seul (sans composant gradient boosting)", {}).get("val_rmse")
     lines = ["| Ablation | RMSE annee2 | écart vs GRU seul |", "|---|---|---|"]
     for name, r in results.items():

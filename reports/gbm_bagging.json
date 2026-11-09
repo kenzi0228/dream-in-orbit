@@ -1,0 +1,20 @@
+{
+ "all-dmop_cmd-dmop_switch+dmop_sw+dmop_stem_cnt": {
+  "strict": {
+   "gbm_plein": 0.08907,
+   "gbm_bagging": 0.07957,
+   "blend_plein": 0.07795,
+   "blend_bagging": 0.07599,
+   "blend_plein+bagging": 0.07635,
+   "t_s": 1685
+  },
+  "split": {
+   "gbm_plein": 0.08232,
+   "gbm_bagging": 0.082,
+   "blend_plein": 0.08299,
+   "blend_bagging": 0.08236,
+   "blend_plein+bagging": 0.0825,
+   "t_s": 1434
+  }
+ }
+}

@@ -1,0 +1,4 @@
+{
+ "gru_v6": "--gbm-weight 0",
+ "gru_v6_next": "--gbm-weight 0 --keep-groups saaf,ltdata,evtf,ftl,dmop_stem_cnt,dmop_stem_next"
+}

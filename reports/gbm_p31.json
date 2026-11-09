@@ -1,0 +1,15 @@
+{
+ "all-dmop_cmd-dmop_switch+dmop_sw+dmop_stem_cnt": {
+  "n_feat": 548,
+  "strict": {
+   "gbm": 0.0845,
+   "blend": 0.07707,
+   "t_s": 678
+  },
+  "split": {
+   "gbm": 0.08243,
+   "blend": 0.08224,
+   "t_s": 839
+  }
+ }
+}

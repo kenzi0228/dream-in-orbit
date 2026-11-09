@@ -23,7 +23,7 @@ import numpy as np
 import pandas as pd
 
 H = 3600 * 1000  # une heure en millisecondes
-FEATURE_VERSION = 3  # a incrementer quand on change les colonnes (invalide le cache)
+FEATURE_VERSION = 7  # a incrementer quand on change les colonnes (invalide le cache)
 
 # Altitudes (km) associees aux evenements orbitaux d'evtf, pour reconstruire une
 # altitude approximative. Pericentre / apocentre de Mars Express ~ 300 km / 10 100 km.
@@ -32,6 +32,7 @@ ALT_APO_KM = 10100.0
 
 MIN_COUNT_CMD = 50   # une commande entre dans le vocabulaire si elle apparait >= 50 fois
 MAX_CMDS = 250       # et on garde au plus 250 commandes
+MIN_COUNT_STEM = 50  # un stem (commande sans sa lettre de variante) entre dans le vocabulaire s'il apparait >= 50 fois (20 : 161 stems, GRU moins bon)
 RECENCY_CAP_H = 24 * 30
 
 
@@ -263,7 +264,7 @@ def dmop_vocab(path: Path) -> dict:
         stems.setdefault(st, []).append(va)
     switches = sorted([st, va] for st, vs in stems.items() if len(vs) >= 2 for va in vs)
     stem_counts = sv["stem"].value_counts()
-    stems_freq = sorted(stem_counts[stem_counts >= MIN_COUNT_CMD].index.tolist())
+    stems_freq = sorted(stem_counts[stem_counts >= MIN_COUNT_STEM].index.tolist())
     return {"cmds": sorted(cmds), "prefixes": prefixes, "switches": switches, "stems": stems_freq}
 
 
@@ -331,6 +332,43 @@ def features_dmop(path: Path, grid: np.ndarray, vocab: dict) -> pd.DataFrame:
             for i, va in enumerate(vs):
                 sw[f"dm_s_{st}{va}"] = (last == i).astype(np.float32)
 
+    # comptes horaires par stem (toutes lettres confondues) : robustes au changement de lettre d'une annee a l'autre
+    sc = pd.DataFrame(index=grid); sn = pd.DataFrame(index=grid)
+    stems_vocab = vocab.get("stems", [])
+    if stems_vocab:
+        c = pd.DataFrame({"h": df["h"], "k": stems_all})
+        c = c[c["k"].isin(set(stems_vocab))].groupby(["h", "k"]).size().unstack(fill_value=0)
+        c = c.reindex(index=grid, columns=stems_vocab, fill_value=0).to_numpy(dtype=np.float32)
+        sc = pd.DataFrame(c, index=grid, columns=[f"dm_sc_{k}" for k in stems_vocab])
+        # commandes a venir (le planning est connu) : compte du stem dans l'heure suivante et sur les 6 heures suivantes
+        n = len(grid); z = np.zeros((1, c.shape[1]), np.float32)
+        sn1 = np.vstack([c[1:], z])
+        cs = np.vstack([z, np.cumsum(c, axis=0)])
+        idx = np.arange(n); sn6 = cs[np.minimum(idx + 7, n)] - cs[idx + 1]
+        sn = pd.DataFrame(np.hstack([sn1, sn6]).astype(np.float32), index=grid,
+                          columns=[f"dm_sn1_{k}" for k in stems_vocab] + [f"dm_sn6_{k}" for k in stems_vocab])
+
+    # interrupteurs sans les lettres : pour chaque stem d'interrupteur, toutes variantes confondues (meme une
+    # lettre inconnue du vocabulaire), heures depuis le dernier changement de variante (dm_sw_X_chg) et
+    # heures jusqu'au prochain changement (dm_sw_X_next, le planning est connu), en log1p, plafonnees.
+    rob = pd.DataFrame(index=grid)
+    if switches:
+        n = len(grid); idx = np.arange(n); cap = float(RECENCY_CAP_H)
+        for st in stems:
+            sub = df2[df2["stem"] == st].sort_values("ut_ms")
+            vars_ = sub["var"].to_numpy()
+            change = np.r_[False, vars_[1:] != vars_[:-1]] if len(vars_) else np.zeros(0, dtype=bool)
+            pos = np.searchsorted(grid, sub["h"].to_numpy()[change], side="right") - 1
+            pos = np.unique(pos[(pos >= 0) & (pos < n)])
+            last = np.full(n, -np.inf); nxt = np.full(n, np.inf)
+            if len(pos):
+                last[pos] = pos; last = np.maximum.accumulate(last)
+                nxt[pos] = pos; nxt = np.minimum.accumulate(nxt[::-1])[::-1]
+            since = np.minimum(idx - last, cap)
+            until = np.minimum(np.where(np.isfinite(nxt), nxt - idx, cap), cap)
+            rob[f"dm_sw_{st}_chg"] = np.log1p(since).astype(np.float32)
+            rob[f"dm_sw_{st}_next"] = np.log1p(np.maximum(until, 0)).astype(np.float32)
+
     # intervalles start / end apparies par identifiant (PENS.000123 ... PENE.000123)
     pair = pd.DataFrame(index=grid)
     for ps, pe in _PAIR_PREFIXES.items():
@@ -345,7 +383,7 @@ def features_dmop(path: Path, grid: np.ndarray, vocab: dict) -> pd.DataFrame:
                      pd.DataFrame({"id": e_id.values, "e": e["ut_ms"].values}), on="id")
         m = m[m["e"] > m["s"]]
         pair[f"dm_act_{ps}"] = interval_fraction(m["s"].to_numpy(), m["e"].to_numpy(), grid)
-    return pd.concat([out, pair, sw, cnt_df, rec_df, rec_prefix, rec_stem], axis=1)
+    return pd.concat([out, pair, sw, cnt_df, rec_df, rec_prefix, rec_stem, sc, sn, rob], axis=1)
 
 
 # --------------------------------------------------------------------------- assemblage
@@ -436,6 +474,14 @@ def derived_features(X: pd.DataFrame) -> pd.DataFrame:
         if serie is not None:
             for w in [6, 24]:
                 out[f"roll_{c}_next{w}h"] = serie[::-1].rolling(w, min_periods=1).mean()[::-1]  # futur (planning connu)
+    # ewm_* : inertie thermique du premier ordre : moyennes exponentielles (constantes de temps 3 h,
+    # 12 h, 48 h, 168 h) du flux recu, de l'ombre, des angles et du pointage
+    for c in EWM_COLS:
+        serie = base.get(c)
+        if serie is None:
+            continue
+        for tau in EWM_TAUS:
+            out[f"ewm_{c}_{tau}h"] = serie.ewm(halflife=tau, min_periods=1).mean()
     return pd.DataFrame(out, index=X.index)
 
 
@@ -444,6 +490,9 @@ ROLL_COLS = ["saaf_cos_sa", "saaf_cos_sx", "saaf_cos_sy", "saaf_cos_sz", "ev_umb
              "dm_total", "dm_p_ATTT", "dm_p_AAAA", "dm_p_APSF", "dm_p_AMMM", "dm_p_ASSS", "dm_p_AHHH", "dm_p_AOOO",
              "dm_p_AVVV", "dm_p_AXXX", "dm_p_AACF"]
 ROLL_WINDOWS = [6, 24, 72, 168]
+EWM_COLS = ["fx_total", "ev_umbra", "ev_penumbra", "saaf_cos_sa", "saaf_cos_sx", "saaf_cos_sy", "saaf_cos_sz",
+            "ftl_comms", "ftl_EARTH", "ftl_SLEW", "ftl_INERTIAL", "ftl_NADIR", "ftl_MAINTENANCE", "ftl_WARMUP"]
+EWM_TAUS = [3, 12, 48, 168]
 
 
 def load_power_hourly(power_csv: Path, grid: np.ndarray | None = None) -> pd.DataFrame:

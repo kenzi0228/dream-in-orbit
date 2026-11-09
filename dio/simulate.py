@@ -31,6 +31,7 @@ def load_ensemble(weights_dir: Path):
                        feat_dropout=cfg.get("feat_dropout", 0.0), cell=cfg.get("cell", "gru"))
         m.load_state_dict(ck["state_dict"])
         m.eval()
+        m.stack = bool(meta.get("stack", False))
         models.append((m, Normalizer.from_state_dict(ck["normalizer"]), float(mw.get(f.name, 1.0)), list(feats)))
     meta["gbm"] = None
     if meta.get("gbm_weight", 0) > 0 and (weights_dir / "gbm.pkl").exists():
@@ -67,7 +68,8 @@ def adapt_on_init(model: WorldModel, norm: Normalizer, xs: torch.Tensor, ys: tor
 
 @torch.no_grad()
 def simulate_one(model: WorldModel, norm: Normalizer, X: np.ndarray, Y_init: np.ndarray | None,
-                 n_init: int, init_bias: float = 0.0, adapt_steps: int = 0, adapt_lr: float = 1e-4) -> np.ndarray:
+                 n_init: int, init_bias: float = 0.0, adapt_steps: int = 0, adapt_lr: float = 1e-4,
+                 clip: bool = True) -> np.ndarray:
     """
     X : (T, F) features brutes ; Y_init : (T, C) verite brute (NaN la ou inconnue, seules les
     n_init premieres lignes sont utilisees). Retourne (T, C) predictions brutes.
@@ -90,7 +92,7 @@ def simulate_one(model: WorldModel, norm: Normalizer, X: np.ndarray, Y_init: np.
         resid = np.nanmean(Y_init[:n_init] - pred[:n_init], axis=0)
         resid = np.nan_to_num(resid)
         pred[n_init:] += init_bias * resid
-    return np.clip(pred, 0.0, None)
+    return np.clip(pred, 0.0, None) if clip else pred
 
 
 def simulate_ensemble(models, Xdf: pd.DataFrame, Y_init, n_init: int, init_bias: float = 0.0,
@@ -101,13 +103,28 @@ def simulate_ensemble(models, Xdf: pd.DataFrame, Y_init, n_init: int, init_bias:
     Xdf : DataFrame de toutes les features horaires (chaque modele y prend ses colonnes).
     models : [(modele, normalizer, poids, features)] ; gbm : (GBMComponent, w) ou None.
     """
-    preds = np.stack([simulate_one(m, n, Xdf[feats].to_numpy(), Y_init, n_init, init_bias, adapt_steps, adapt_lr)
+    stack = bool(meta_stack(models)) if gbm is not None else False
+    base = None
+    if gbm is not None:
+        comp, wg = gbm
+        base = comp.predict(Xdf[comp.features].to_numpy())
+        if stack:
+            # empilement : le GRU a appris le residu y - GBM ; ses entrees peuvent inclure la prediction du GBM
+            Xdf = Xdf.copy()
+            for j, c in enumerate([f for f in models[0][3] if f.startswith("gbm_NPWD")]):
+                Xdf[c] = base[:, j]
+            Y_init = None if Y_init is None else Y_init - base
+    preds = np.stack([simulate_one(m, n, Xdf[feats].to_numpy(), Y_init, n_init, init_bias, adapt_steps, adapt_lr, clip=not stack)
                       for m, n, _, feats in models])
     w = np.array([wt for _, _, wt, _ in models], dtype=np.float64)
     w = w / w.sum()
     mean = np.tensordot(w, preds, axes=1)
     std = np.sqrt(np.tensordot(w, (preds - mean) ** 2, axes=1))
     if gbm is not None:
-        comp, wg = gbm
-        mean = (1 - wg) * mean + wg * comp.predict(Xdf[comp.features].to_numpy())
+        mean = np.clip(base + mean, 0.0, None) if stack else (1 - wg) * mean + wg * base
     return mean, std, preds
+
+
+def meta_stack(models) -> bool:
+    """Vrai si les modeles ont ete entraines sur le residu du GBM (marque dans leur checkpoint)."""
+    return any(getattr(m, "stack", False) for m, _, _, _ in models)

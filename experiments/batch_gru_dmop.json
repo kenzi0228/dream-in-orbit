@@ -1,0 +1,5 @@
+{
+ "gru_stem_cnt": "--gbm-weight 0 --keep-groups saaf,ltdata,evtf,ftl,dmop_stem_cnt",
+ "gru_sw": "--gbm-weight 0 --keep-groups saaf,ltdata,evtf,ftl,dmop_sw",
+ "gru_sw_stem_cnt": "--gbm-weight 0 --keep-groups saaf,ltdata,evtf,ftl,dmop_sw,dmop_stem_cnt"
+}

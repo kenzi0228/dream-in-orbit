@@ -1,0 +1,80 @@
+{
+ "all-dmop_cmd-dmop_switch+dmop_sw+dmop_stem_cnt": {
+  "n_feat": 548,
+  "strict": {
+   "gbm": 0.08215,
+   "blend": 0.07662,
+   "t_s": 465
+  },
+  "split": {
+   "gbm": 0.08291,
+   "blend": 0.0824,
+   "t_s": 518
+  }
+ },
+ "all-dmop_cmd-dmop_switch": {
+  "n_feat": 341,
+  "strict": {
+   "gbm": 0.08177,
+   "blend": 0.07685,
+   "t_s": 265
+  },
+  "split": {
+   "gbm": 0.08483,
+   "blend": 0.08318,
+   "t_s": 342
+  }
+ },
+ "all-dmop_switch": {
+  "n_feat": 737,
+  "strict": {
+   "gbm": 0.09148,
+   "blend": 0.07856,
+   "t_s": 596
+  },
+  "split": {
+   "gbm": 0.08355,
+   "blend": 0.08338,
+   "t_s": 747
+  }
+ },
+ "all-dmop_cmd+dmop_sw+dmop_stem_cnt": {
+  "n_feat": 625,
+  "strict": {
+   "gbm": 0.08649,
+   "blend": 0.07811,
+   "t_s": 513
+  },
+  "split": {
+   "gbm": 0.08286,
+   "blend": 0.08313,
+   "t_s": 593
+  }
+ },
+ "all+dmop_sw+dmop_stem_cnt": {
+  "n_feat": 1021,
+  "strict": {
+   "gbm": 0.08913,
+   "blend": 0.0777,
+   "t_s": 778
+  },
+  "split": {
+   "gbm": 0.08231,
+   "blend": 0.08286,
+   "t_s": 972
+  }
+ },
+ "all-dmop_cmd": {
+  "n_feat": 418,
+  "strict": {
+   "gbm": 0.08681,
+   "blend": 0.07827,
+   "t_s": 320
+  },
+  "split": {
+   "gbm": 0.08618,
+   "blend": 0.08378,
+   "t_s": 505
+  }
+ }
+}

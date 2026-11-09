@@ -1,0 +1,5 @@
+{
+ "gru_stem_cnt_s1": "--gbm-weight 0 --seed-offset 1 --keep-groups saaf,ltdata,evtf,ftl,dmop_stem_cnt",
+ "gru_stem_cnt_base": "--gbm-weight 0 --keep-groups saaf,ltdata,evtf,ftl,dmop_stem_cnt,dmop_base",
+ "gru_stem_cnt_prefix": "--gbm-weight 0 --keep-groups saaf,ltdata,evtf,ftl,dmop_stem_cnt,dmop_base --drop-cols lt_earthmars|lt_sunmarsearth|^dm_act_"
+}
