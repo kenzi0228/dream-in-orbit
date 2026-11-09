@@ -109,7 +109,7 @@ h_t = GRU(h_{t-1}, MLP([x_t, y_{t-1}]))                   état caché = mémoir
   que le planning, section 5) donne la même RMSE. La boucle état → état suivant
   passe donc par l'état caché h_t, pas par la prédiction ré-injectée ; les 7 jours
   réels servent à initialiser h_t. Le scheduled sampling reste nécessaire dès que la
-  ré-injection existe (sans lui : +0,006, et le MLP sans mémoire diverge).
+  ré-injection existe (sans lui : +0,016).
 
 ### Les échecs, dans l'ordre
 
@@ -220,30 +220,34 @@ prédictions (scheduled sampling jusqu'à p = 0).
 ## 5. Ablations (`ablations.py`, `reports/ablations.md`)
 
 Chaque ligne ré-entraîne le modèle (1 graine, 80 époques, protocole strict annee1 → annee2)
-en retirant ou en ajoutant un ingrédient. Les ablations du GRU sont mesurées sur le GRU seul
-(0,0821) pour rester lisibles ; les deux premières lignes situent le système complet.
+en retirant ou en ajoutant un ingrédient, à partir du jeu de features livré (physique +
+comptes de commandes, 196 colonnes). Les ablations du GRU sont mesurées sur le GRU seul
+(0,0795) pour rester lisibles ; les deux premières lignes situent le système complet. Le
+bruit entre graines est de ±0,001 : un écart inférieur à 0,002 ne veut rien dire.
 
 | Ablation | RMSE | écart | ce que ça montre |
 |---|---|---|---|
-| **système complet : GRU + composant gradient boosting (0,45)** | **0,0777** | −0,004 | la diversité des familles de modèles vaut plus que n'importe quelle feature |
-| GRU seul | 0,0821 | référence | |
-| sans Soleil (saaf) | 0,0988 | +0,017 | l'ingrédient le plus important : NPWD2451 passe de 0,23 à 0,33 ; le chauffage est d'abord une question d'exposition au Soleil |
-| sans tendances (ltdata : constante solaire, durées d'éclipse et d'occultation) | 0,0891 | +0,007 | la saison compte, même avec les éclipses heure par heure |
-| sans pointage (ftl) | 0,0880 | +0,006 | NPWD2551 passe de 0,29 à 0,34 : l'orientation (communication vers la Terre ou non) change la face exposée |
-| sans éclipses ni événements (evtf) | 0,0838 | +0,002 | surprenant : la durée d'éclipse journalière de ltdata et les angles solaires portent déjà l'essentiel ; l'umbra horaire affine les cycles |
-| sans scheduled sampling (teacher forcing seul) | 0,0876 | +0,006 | sans apprendre à rêver, le modèle dérive davantage (NPWD2451 0,26 contre 0,23) |
-| fenêtres indépendantes (état remis à zéro, 20 époques) | 0,0865 | +0,004 | l'état caché doit être entraîné sur des flux longs pour tenir 16 000 pas |
-| sans mémoire (MLP heure par heure) | 0,0841 | +0,002 | la mémoire aide peu une fois les bonnes features en place ; sa valeur est dans les cycles horaires et la stabilité, pas dans la moyenne |
-| sans ré-injection (planning seul) | 0,0818 | −0,000 | relire sa propre prédiction n'apporte rien : la mémoire utile est dans h_t, pas dans y_{t-1}. Les 7 jours réels servent à initialiser l'état caché |
-| avec calendrier (distance Terre-Mars, angle Soleil-Mars-Terre) | 0,0859 | +0,004 | les features « horloge » dégradent ; avec le reste de la régularisation l'effet est modéré, il était massif sur les premiers essais |
-| avec commandes dmop (préfixes + 77 interrupteurs) | 0,1025 | +0,020 | NPWD2531 passe de 0,08 à 0,31 : le modèle associe des commandes à des régimes de annee1 qui changent de nom dans annee2 |
-| avec toutes les commandes dmop (560 features) | 0,1061 | +0,024 | pire que la constante sur NPWD2551 (0,42) |
+| **système complet : GRU + composant gradient boosting (0,5)** | **0,0749** | −0,005 | la diversité des familles de modèles vaut plus que n'importe quelle feature |
+| GRU seul | 0,0795 | référence | |
+| sans Soleil (saaf) | 0,1029 | +0,023 | l'ingrédient le plus important : NPWD2451 passe de 0,24 à 0,35 et NPWD2532 de 0,14 à 0,26 ; le chauffage est d'abord une question d'exposition au Soleil |
+| sans tendances (ltdata : constante solaire, durées d'éclipse et d'occultation) | 0,0885 | +0,009 | la saison compte, même avec les éclipses heure par heure |
+| sans pointage (ftl) | 0,0847 | +0,005 | NPWD2551 passe de 0,28 à 0,33 : l'orientation (communication vers la Terre ou non) change la face exposée |
+| sans éclipses ni événements (evtf) | 0,0794 | −0,000 | la durée d'éclipse journalière de ltdata et les angles solaires portent tout pour le GRU ; l'umbra horaire ne lui ajoute rien (le gradient boosting, lui, la lit) |
+| sans comptes de commandes (dmop_stem_cnt : 47 features physiques) | 0,0821 | +0,003 | ce que les commandes apportent une fois débarrassées de leur lettre : surtout les lignes à deux états (NPWD2881 : 0,125 → 0,088 ; NPWD2561 : 0,119 → 0,087) |
+| sans scheduled sampling (teacher forcing seul) | 0,0950 | +0,016 | sans apprendre à rêver, le modèle dérive : NPWD2551 monte à 0,39 |
+| fenêtres indépendantes (état remis à zéro, 20 époques) | 0,0852 | +0,006 | l'état caché doit être entraîné sur des flux longs pour tenir 16 000 pas |
+| sans mémoire (MLP heure par heure) | 0,0823 | +0,003 | la mémoire aide peu une fois les bonnes features en place ; sa valeur est dans les cycles horaires et la stabilité, pas dans la moyenne |
+| sans ré-injection (planning seul) | 0,0788 | −0,001 | relire sa propre prédiction n'apporte rien : la mémoire utile est dans h_t, pas dans y_{t-1}. Les 7 jours réels servent à initialiser l'état caché |
+| avec calendrier (distance Terre-Mars, angle Soleil-Mars-Terre) | 0,0923 | +0,013 | les features « horloge » datent chaque heure et le modèle mémorise l'année d'entraînement : NPWD2551 à 0,37 |
+| avec interrupteurs dmop par lettre (dmop_switch : 273 features) | 0,0938 | +0,014 | NPWD2531 passe de 0,08 à 0,22 : le modèle associe des lettres de commande à des régimes de annee1, et les lettres changent dans annee2 (section 8) |
+| avec toutes les colonnes dmop (1 485 features) | 0,1012 | +0,022 | NPWD2531 à 0,33, NPWD2851 à 0,22 : plus d'erreur que la constante sur ces deux circuits |
 
-Ce que ça dit du problème : la consommation de Mars Express est pilotée par la
-physique (Soleil, saison, orientation) ; les commandes, telles qu'elles sont codées
-dans dmop, sont trop instables d'une année à l'autre pour qu'un modèle entraîné sur
-une seule année en tire une loi. Et la mémoire sert surtout à garder la simulation
-stable sur deux ans.
+Ce que ça dit du problème : la consommation de Mars Express est pilotée par la physique
+(Soleil, saison, orientation). Les commandes aident si on les lit sans leur lettre de
+variante, comme des comptes d'événements, et nuisent dès qu'elles sont codées par lettre ou
+qu'on en donne toutes les colonnes à un réseau entraîné sur une seule année. La mémoire sert
+surtout à garder la simulation stable sur deux ans, et le scheduled sampling est ce qui la
+rend possible.
 
 ## 6. Bonus : le pilote (`pilot.py`, `reports/pilot.json`)
 

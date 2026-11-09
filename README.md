@@ -102,7 +102,7 @@ ablations dans le rapport).
 .venv/bin/python baselines.py                       # reports/baselines.json
 .venv/bin/python train.py --holdout --seeds 5       # weights_holdout/ (validation stricte)
 .venv/bin/python demo.py --weights weights_holdout  # reports/figures/
-.venv/bin/python ablations.py --seeds 1             # reports/ablations.json + .md (~1 h 30)
+.venv/bin/python ablations.py --seeds 1             # reports/ablations.json + .md (~1 h 15)
 .venv/bin/python pilot.py --weights weights_holdout --start-day 100 --days 14 --iters 120
 .venv/bin/python tests/test_features.py             # tests unitaires des features
 ./run_all.sh 6                                      # validations strict et chrono, flux officiel, modèle final, démo, pilote (~3 h 30)
