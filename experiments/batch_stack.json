@@ -1,0 +1,4 @@
+{
+ "stack": "--stack --no-feedback",
+ "stack_input": "--stack --stack-input --no-feedback"
+}

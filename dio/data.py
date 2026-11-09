@@ -51,7 +51,7 @@ def load_period(ctx_dir: Path, vocab: dict, power_csv: Path | None = None, use_c
 
 def get_vocab(kit: Path, years: list[str], use_cache: bool = True) -> dict:
     kit = Path(kit)
-    f = CACHE / f"vocab_{'_'.join(years)}.json"
+    f = CACHE / f"vocab_v{FEATURE_VERSION}_{'_'.join(years)}.json"   # le vocabulaire depend des seuils : versionne
     if use_cache and f.exists():
         return json.loads(f.read_text())
     v = build_vocab([kit / y for y in years])
@@ -64,7 +64,8 @@ def get_vocab(kit: Path, years: list[str], use_cache: bool = True) -> dict:
 def feature_groups(columns) -> dict[str, list[str]]:
     """Regroupe les colonnes par source (pour les ablations)."""
     groups = {"saaf": [], "ltdata": [], "evtf": [], "ftl": [], "dmop_base": [], "dmop_switch": [], "dmop_cmd": [],
-              "dmop_prefix_rec": [], "dmop_stem_rec": [], "flux": [], "hist": [], "leadlag": [], "roll": []}
+              "dmop_prefix_rec": [], "dmop_stem_rec": [], "dmop_sw": [], "dmop_stem_cnt": [], "dmop_stem_next": [],
+              "flux": [], "hist": [], "leadlag": [], "roll": [], "ewm": []}
     for c in columns:
         if c.startswith("dm_s_"):
             groups["dmop_switch"].append(c)
@@ -74,6 +75,12 @@ def feature_groups(columns) -> dict[str, list[str]]:
             groups["dmop_prefix_rec"].append(c)
         elif c.startswith("dm_st_"):
             groups["dmop_stem_rec"].append(c)
+        elif c.startswith("dm_sw_"):
+            groups["dmop_sw"].append(c)
+        elif c.startswith("dm_sc_"):
+            groups["dmop_stem_cnt"].append(c)
+        elif c.startswith("dm_sn1_") or c.startswith("dm_sn6_"):
+            groups["dmop_stem_next"].append(c)
         elif c.startswith("dm_"):
             groups["dmop_base"].append(c)
         elif c.startswith("fx_"):
@@ -84,6 +91,8 @@ def feature_groups(columns) -> dict[str, list[str]]:
             groups["leadlag"].append(c)
         elif c.startswith("roll_"):
             groups["roll"].append(c)
+        elif c.startswith("ewm_"):
+            groups["ewm"].append(c)
         elif c.startswith("saaf_"):
             groups["saaf"].append(c)
         elif c.startswith("lt_"):
@@ -103,7 +112,7 @@ def select_features(columns, keep: str = "", drop: str = "") -> list[str]:
     def expand(spec):
         out = []
         for g in [x for x in spec.split(",") if x]:
-            out += ["dmop_base", "dmop_switch", "dmop_cmd", "dmop_prefix_rec", "dmop_stem_rec"] if g == "dmop" else [g]
+            out += ["dmop_base", "dmop_switch", "dmop_cmd", "dmop_prefix_rec", "dmop_stem_rec", "dmop_sw", "dmop_stem_cnt", "dmop_stem_next"] if g == "dmop" else [g]
         return out
 
     kept = expand(keep) or list(groups)

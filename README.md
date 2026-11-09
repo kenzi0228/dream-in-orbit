@@ -8,10 +8,15 @@ entière à partir de ses 7 premiers jours réels :
     état_{t-1} + actions_t + contexte_t  --(GRU)-->  état_t
 
 La prédiction est la moyenne d'un ensemble de 5 GRU (Deep Ensembles, leur écart-type donne
-l'incertitude), mélangée à 55 / 45 avec un composant gradient boosting heure par heure qui
-lit les commandes dmop (`dio/gbm.py`). Les deux modèles font des erreurs peu corrélées, et
-le mélange gagne 0,004 à 0,008 de RMSE dans les deux protocoles de validation.
+l'incertitude), mélangée à parts égales avec un composant gradient boosting heure par heure
+(`dio/gbm.py`, 5 sacs temporels). Les deux modèles font des erreurs peu corrélées, et le
+mélange gagne 0,003 à 0,005 de RMSE dans les deux protocoles de validation.
 `python train.py --gbm-weight 0` donne la version réseau de neurones pur.
+
+Les commandes dmop sont lues **sans leur lettre de variante** (`AXXX301A` et `AXXX301C`
+sont la même commande) : les lettres changent d'une année martienne à l'autre pour 20 des
+29 interrupteurs, et tout ce qui est appris par lettre est perdu l'année suivante
+(`RAPPORT.md`, § 8).
 
 ## Installation
 
@@ -60,7 +65,8 @@ Autres scripts :
 | `dio/model.py` | le world model GRU (teacher forcing, rollout avec scheduled sampling), normalisation |
 | `dio/simulate.py` | simulation d'une période avec un ensemble de modèles (GRU pondérés + composant GBM) |
 | `dio/gbm.py` | le composant gradient boosting (un modèle sklearn par circuit, déterministe) |
-| `experiments/` | harnais d'expériences bi-protocole et études de mélange (`reports/experiments.csv`, `reports/gbm_*.json`) |
+| `experiments/` | harnais d'expériences bi-protocole (`sweep.py`), jeux de features et hyperparamètres du GBM (`gbm_sets.py`), re-mélange hors ligne (`reblend_sets.py`), analyses d'erreurs (`analyse_*.py`) ; résultats dans `reports/experiments.csv`, `reports/gbm_*.json`, `reports/analyse_erreurs.json` |
+| `run_all.sh` | relance toute la chaîne de livrables (validations, flux officiel, modèle final, démo, pilote, ablations) |
 | `dio/metrics.py` | RMSE identique à `evaluate.py`, RMSE par circuit et par horizon |
 | `train.py` | entraînement en une commande (ensemble de 5 GRU) |
 | `predict.py` | interface officielle |
@@ -73,18 +79,22 @@ les figures dans `reports/figures/`.
 | Modèle | RMSE strict (annee1 → annee2) | RMSE chrono (2 ans → ½ annee2) |
 |---|---|---|
 | Constante | 0,106 | 0,105 |
-| Gradient boosting seul (toutes features) | 0,089 | 0,082 |
-| Ensemble de 5 GRU seul | 0,082 | 0,091 |
-| **World model livré (0,55 GRU + 0,45 GBM)** | **0,078** | **0,083** |
+| Gradient boosting seul (commandes sans lettre, 5 sacs temporels) | 0,079 | 0,082 |
+| Ensemble de 5 GRU seul (physique + comptes de commandes) | 0,080 | 0,090 |
+| World model de la deuxième semaine (0,55 GRU + 0,45 GBM, commandes par lettre) | 0,078 | 0,083 |
+| **World model livré (0,5 GRU + 0,5 GBM)** | **0,075** | **0,081** |
 
-Le modèle livré dans `weights/` (5 fichiers `model_k.pt`, 2,6 Mo au total, plus `meta.json`
-qui contient le vocabulaire et la liste des features) est entraîné sur annee1 + annee2
-(`python train.py`, 80 époques par modèle, ~25 min sur un portable 6 cœurs, CPU).
-La seule estimation honnête de sa RMSE est celle de `weights_holdout` (0,078 en
-strict) et de `weights_holdout_split` (0,083 en chronologique à deux ans). Il ne lit que les features physiques (Soleil,
-ombre, orbite, pointage, constante solaire, durées d'éclipse) : les commandes dmop et
-les colonnes « calendrier » de ltdata dégradent la généralisation d'une année à l'autre
-(détails et ablations dans le rapport).
+Le modèle livré dans `weights/` (5 fichiers `model_k.pt`, 3 Mo au total, `gbm.pkl`, le
+composant gradient boosting compressé, 44 Mo, et `meta.json` qui contient le vocabulaire et
+la liste des features) est entraîné sur annee1 + annee2 (`python train.py`, 80 époques par
+GRU puis 5 sacs de gradient boosting, ~70 min sur un portable 6 cœurs, CPU).
+La seule estimation honnête de sa RMSE est celle de `weights_holdout` (0,075 en strict,
+0,075095 par le flux officiel `predict.py` → `evaluate.py`) et de `weights_holdout_split`
+(0,081 en chronologique à deux ans). Le GRU lit les features physiques (Soleil, ombre,
+orbite, pointage, constante solaire, durées d'éclipse) et les comptes horaires de commandes
+par stem, sans lettre de variante ; les interrupteurs codés par lettre et les colonnes
+« calendrier » de ltdata dégradent la généralisation d'une année à l'autre (détails et
+ablations dans le rapport).
 
 ## Reproduire le rapport
 
@@ -92,7 +102,8 @@ les colonnes « calendrier » de ltdata dégradent la généralisation d'une ann
 .venv/bin/python baselines.py                       # reports/baselines.json
 .venv/bin/python train.py --holdout --seeds 5       # weights_holdout/ (validation stricte)
 .venv/bin/python demo.py --weights weights_holdout  # reports/figures/
-.venv/bin/python ablations.py --seeds 1             # reports/ablations.json + .md
+.venv/bin/python ablations.py --seeds 1             # reports/ablations.json + .md (~1 h 30)
 .venv/bin/python pilot.py --weights weights_holdout --start-day 100 --days 14 --iters 120
 .venv/bin/python tests/test_features.py             # tests unitaires des features
+./run_all.sh 6                                      # validations strict et chrono, flux officiel, modèle final, démo, pilote (~3 h 30)
 ```

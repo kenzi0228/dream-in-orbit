@@ -1,0 +1,5 @@
+{
+ "gru_fd01": "--gbm-weight 0 --feat-dropout 0.1",
+ "gru_fd03": "--gbm-weight 0 --feat-dropout 0.3",
+ "gru_h192": "--gbm-weight 0 --hidden 192"
+}

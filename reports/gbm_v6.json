@@ -1,0 +1,28 @@
+{
+ "all-dmop_cmd-dmop_switch+dmop_sw+dmop_stem_cnt": {
+  "n_feat": 572,
+  "strict": {
+   "gbm": 0.08217,
+   "blend": 0.07669,
+   "t_s": 360
+  },
+  "split": {
+   "gbm": 0.08179,
+   "blend": 0.08224,
+   "t_s": 478
+  }
+ },
+ "all-dmop_cmd-dmop_switch+dmop_sw+dmop_stem_cnt+dmop_stem_next": {
+  "n_feat": 894,
+  "strict": {
+   "gbm": 0.08116,
+   "blend": 0.07664,
+   "t_s": 555
+  },
+  "split": {
+   "gbm": 0.08203,
+   "blend": 0.08185,
+   "t_s": 695
+  }
+ }
+}

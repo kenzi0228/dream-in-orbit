@@ -24,3 +24,14 @@ base_seed1,--seed-offset 1,0.08283,0.09146,0.08714,8.5
 base_seed2,--seed-offset 2,0.083,0.09159,0.0873,8.5
 huber03,--huber 0.3,0.0825,0.09163,0.08706,8.4
 huber01,--huber 0.1,0.08374,0.10335,0.09354,8.4
+gru_stem_cnt,"--gbm-weight 0 --keep-groups saaf,ltdata,evtf,ftl,dmop_stem_cnt",0.07953,0.09011,0.08482,10.7
+gru_sw,"--gbm-weight 0 --keep-groups saaf,ltdata,evtf,ftl,dmop_sw",0.09198,0.10368,0.09783,9.5
+gru_sw_stem_cnt,"--gbm-weight 0 --keep-groups saaf,ltdata,evtf,ftl,dmop_sw,dmop_stem_cnt",0.10073,0.11214,0.10643,10.0
+gru_stem_cnt_s1,"--gbm-weight 0 --seed-offset 1 --keep-groups saaf,ltdata,evtf,ftl,dmop_stem_cnt",0.08037,0.0902,0.08529,11.4
+gru_stem_cnt_base,"--gbm-weight 0 --keep-groups saaf,ltdata,evtf,ftl,dmop_stem_cnt,dmop_base",0.08233,0.09562,0.08898,11.2
+gru_stem_cnt_prefix,"--gbm-weight 0 --keep-groups saaf,ltdata,evtf,ftl,dmop_stem_cnt,dmop_base --drop-cols lt_earthmars|lt_sunmarsearth|^dm_act_",0.08011,0.09075,0.08543,10.9
+gru_fd01,--gbm-weight 0 --feat-dropout 0.1,0.08501,0.0906,0.0878,11.0
+gru_fd03,--gbm-weight 0 --feat-dropout 0.3,0.07981,0.0899,0.08485,11.0
+gru_h192,--gbm-weight 0 --hidden 192,0.08207,0.08988,0.08597,13.4
+gru_v6,--gbm-weight 0,0.08099,0.09253,0.08676,12.1
+gru_v6_next,"--gbm-weight 0 --keep-groups saaf,ltdata,evtf,ftl,dmop_stem_cnt,dmop_stem_next",0.08102,0.09473,0.08787,8.3

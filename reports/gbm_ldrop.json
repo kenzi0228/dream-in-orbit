@@ -1,0 +1,15 @@
+{
+ "all+dmop_sw+dmop_stem_cnt~c2p0.5": {
+  "n_feat": 1021,
+  "strict": {
+   "gbm": 0.0903,
+   "n_stems": 149,
+   "t_s": 1406
+  },
+  "split": {
+   "gbm": 0.08166,
+   "n_stems": 149,
+   "t_s": 2071
+  }
+ }
+}

@@ -59,7 +59,8 @@ def parse():
     ap.add_argument("--no-feedback", action="store_true")
     ap.add_argument("--no-memory", action="store_true")
     ap.add_argument("--drop-groups", default="", help="groupes de features a retirer (saaf,ltdata,evtf,ftl,dmop_base,dmop_switch,dmop_cmd ; dmop = les trois)")
-    ap.add_argument("--keep-groups", default="saaf,ltdata,evtf,ftl", help="groupes de features a garder (vide = tous)")
+    ap.add_argument("--keep-groups", default="saaf,ltdata,evtf,ftl,dmop_stem_cnt",
+                    help="groupes de features du GRU (vide = tous) ; dmop_stem_cnt = comptes horaires de commandes par stem, sans la lettre de variante")
     ap.add_argument("--drop-cols", default="lt_earthmars|lt_sunmarsearth",
                     help="regex : colonnes de features a retirer (par defaut les 'calendriers' : distance Terre-Mars, angle Soleil-Mars-Terre)")
     ap.add_argument("--weight-decay", type=float, default=1e-3)
@@ -75,15 +76,21 @@ def parse():
     ap.add_argument("--streams", type=int, default=16, help="stateful : nombre de flux paralleles (decoupage du train)")
     ap.add_argument("--seg", type=int, default=168, help="stateful : longueur des segments de BPTT (heures)")
     ap.add_argument("--threads", type=int, default=0)
-    ap.add_argument("--gbm-weight", type=float, default=0.45,
+    ap.add_argument("--gbm-weight", type=float, default=0.5,
                     help="poids du composant gradient boosting dans le melange final (0 = ensemble de GRU pur)")
     ap.add_argument("--gbm-groups", default="", help="groupes de features du GBM (vide = toutes les colonnes)")
-    ap.add_argument("--gbm-drop-cols", default="lt_earthmars|lt_sunmarsearth|^roll_",
+    ap.add_argument("--gbm-bags", type=int, default=5, help="bagging temporel du GBM : nombre de sacs (0 ou 1 = un seul ajustement)")
+    ap.add_argument("--gbm-drop-cols", default="lt_earthmars|lt_sunmarsearth|^roll_|^ewm_|^dm_s_|^dm_c_|^dm_r_",
                     help="regex : colonnes retirees des features du GBM (par defaut les 'calendriers')")
     ap.add_argument("--aux-models", type=int, default=0,
                     help="GRU auxiliaires entraines sur un autre jeu de features (diversite de l'ensemble, reseau de neurones pur)")
     ap.add_argument("--aux-groups", default="", help="groupes de features des GRU auxiliaires (vide = toutes)")
     ap.add_argument("--aux-weight", type=float, default=0.2, help="poids total des GRU auxiliaires dans la moyenne")
+    ap.add_argument("--stack", action="store_true",
+                    help="empilement : le GBM predit d'abord, le GRU apprend le residu (cible = y - GBM hors-pli) ; "
+                         "prediction finale = GBM + GRU. Remplace le melange pondere.")
+    ap.add_argument("--stack-folds", type=int, default=4, help="empilement : nombre de blocs temporels pour les predictions hors-pli")
+    ap.add_argument("--stack-input", action="store_true", help="empilement : la prediction du GBM est aussi donnee en entree du GRU")
     ap.add_argument("--tag", default="")
     return ap.parse_args()
 
@@ -252,14 +259,49 @@ def main():
     meta = {"features": feats, "targets": targets, "vocab": vocab, "n_init": N_INIT, "args": vars(args)}
     (out_dir / "meta.json").write_text(json.dumps(meta))  # ecrit tot (poids partiels utilisables), complete a la fin
 
+    # ---- empilement : GBM hors-pli sur le train, le GRU apprend le residu
+    gbm_feats_all = None
+    Ytr_target, Yva_target, pg_va = Ytr, Yva, None
+    if args.stack:
+        import re as _re
+        gbm_feats_all = select_features(X1.columns, keep=args.gbm_groups, drop="")
+        if args.gbm_drop_cols:
+            gbm_feats_all = [c for c in gbm_feats_all if not _re.search(args.gbm_drop_cols, c)]
+        Xg_all = (pd.concat([X1, X2]) if Xva is None else (X1 if args.holdout else pd.concat([X1, X2.iloc[:int(len(X2) * args.holdout_split)]])))[gbm_feats_all].to_numpy()
+        t0 = time.time()
+        oof = np.full(Ytr.shape, np.nan, dtype=np.float64)
+        bounds = np.linspace(0, len(Xg_all), args.stack_folds + 1).astype(int)
+        for i in range(args.stack_folds):
+            a, b = bounds[i], bounds[i + 1]
+            tr = np.r_[0:a, b:len(Xg_all)]
+            g = GBMComponent(gbm_feats_all).fit(Xg_all[tr], Ytr[tr])
+            oof[a:b] = g.predict(Xg_all[a:b])
+        log(json.dumps({"stack_oof_done": args.stack_folds, "oof_rmse": rmse(oof[~np.isnan(Ytr).any(axis=1)], Ytr[~np.isnan(Ytr).any(axis=1)]), "time_s": round(time.time() - t0)}))
+        Ytr_target = Ytr - oof  # residu (NaN la ou y est NaN)
+        if Xva is not None:
+            g_full = GBMComponent(gbm_feats_all, bags=args.gbm_bags).fit(Xg_all, Ytr)
+            Xg_va = (X2 if args.holdout else X2.iloc[int(len(X2) * args.holdout_split):])[gbm_feats_all].to_numpy()
+            pg_va = g_full.predict(Xg_va)
+            Yva_target = Yva - pg_va
+            log(json.dumps({"val_rmse_gbm_alone": rmse(pg_va[N_INIT:], Yva[N_INIT:])}))
+        if args.stack_input:
+            gcols = [f"gbm_{t}" for t in targets]
+            Xtr = np.concatenate([Xtr, oof], axis=1)
+            feats = feats + gcols
+            if Xva is not None:
+                Xva = np.concatenate([Xva, pg_va], axis=1)
+            meta["features"] = feats
+        meta["stack"] = True
+
     preds, weights = [], []
     model_weights = {}
     for s in range(args.seed_offset, args.seed_offset + args.seeds):
-        model, norm, hist = train_one(s, Xtr, Ytr, Xva, Yva, feats, targets, args, out_dir, log)
+        model, norm, hist = train_one(s, Xtr, Ytr_target, Xva, Yva_target, feats, targets, args, out_dir, log)
         model_weights[f"model_{s}.pt"] = 1.0
         if Xva is not None:
-            preds.append(simulate_one(model, norm, Xva, Yva, N_INIT, init_bias=args.init_bias,
-                                      adapt_steps=args.adapt_steps, adapt_lr=args.adapt_lr))
+            pr = simulate_one(model, norm, Xva, Yva_target, N_INIT, init_bias=args.init_bias,
+                              adapt_steps=args.adapt_steps, adapt_lr=args.adapt_lr, clip=not args.stack)
+            preds.append(pr if not args.stack else np.clip(pr + pg_va, 0, None))
             weights.append(1.0)
             ens = np.average(preds, axis=0, weights=weights)
             log(json.dumps({"ensemble_size": len(preds), "val_rmse_ensemble": rmse(ens[N_INIT:], Yva[N_INIT:])}))
@@ -284,8 +326,10 @@ def main():
         meta["aux_features"] = aux_feats
     meta["model_weights"] = model_weights
 
-    # composant gradient boosting
+    # composant gradient boosting (en mode empilement : base de la prediction, le GRU ajoute le residu)
     gbm = None
+    if args.stack:
+        args.gbm_weight = 1.0
     if args.gbm_weight > 0:
         import re as _re
         gbm_feats = select_features(X1.columns, keep=args.gbm_groups, drop="")
@@ -293,7 +337,7 @@ def main():
             gbm_feats = [c for c in gbm_feats if not _re.search(args.gbm_drop_cols, c)]
         Xg_tr = (pd.concat([X1, X2]) if Xva is None else (X1 if args.holdout else pd.concat([X1, X2.iloc[:int(len(X2) * args.holdout_split)]])))[gbm_feats].to_numpy()
         t0 = time.time()
-        gbm = GBMComponent(gbm_feats).fit(Xg_tr, Ytr)
+        gbm = GBMComponent(gbm_feats, bags=args.gbm_bags).fit(Xg_tr, Ytr)
         gbm.save(out_dir / "gbm.pkl")
         meta["gbm_weight"] = args.gbm_weight
         meta["gbm_features_n"] = len(gbm_feats)
@@ -304,13 +348,15 @@ def main():
         ens = np.average(preds, axis=0, weights=weights)
         std = np.sqrt(np.average((np.stack(preds) - ens) ** 2, axis=0, weights=weights))
         report = {"val_rmse_gru": rmse(ens[N_INIT:], Yva[N_INIT:])}
-        if gbm is not None:
+        if gbm is not None and not args.stack:
             Xg_va = (X2 if args.holdout else X2.iloc[int(len(X2) * args.holdout_split):])[gbm_feats].to_numpy()
             pg = gbm.predict(Xg_va)
             report["val_rmse_gbm"] = rmse(pg[N_INIT:], Yva[N_INIT:])
             for w in [0.2, 0.3, 0.4]:
                 report[f"val_rmse_blend_{w}"] = rmse(((1 - w) * ens + w * pg)[N_INIT:], Yva[N_INIT:])
             ens = (1 - args.gbm_weight) * ens + args.gbm_weight * pg
+        elif args.stack:
+            report["val_rmse_gbm"] = rmse(pg_va[N_INIT:], Yva[N_INIT:])  # ens contient deja GBM + residu
         report.update({
             "val_rmse": rmse(ens[N_INIT:], Yva[N_INIT:]),
             "val_rmse_per_circuit": dict(zip(targets, rmse_per_circuit(ens[N_INIT:], Yva[N_INIT:]).round(5).tolist())),

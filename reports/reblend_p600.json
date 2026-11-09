@@ -1,0 +1,18 @@
+[
+ {
+  "set":"all-dmop_cmd-dmop_switch+dmop_sw+dmop_stem_cnt",
+  "strict_gbm":0.08202,
+  "strict_b45":0.07659,
+  "strict_wopt":0.5,
+  "strict_bopt":0.07652,
+  "split_gbm":0.08251,
+  "split_b45":0.08222,
+  "split_wopt":0.7,
+  "split_bopt":0.08082,
+  "strict@w_split":0.07742,
+  "split@w_strict":0.08174,
+  "moy_b45":0.0794,
+  "w_commun":0.6,
+  "moy_bcommun":0.07891
+ }
+]
