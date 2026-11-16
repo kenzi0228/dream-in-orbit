@@ -81,6 +81,9 @@ le fichier de commandes (`RAPPORT.md`, § 5).
   par `demo/build_demo_data.py`.
 * `rapport/rapport.pdf` : le rapport en version article (LaTeX, XeLaTeX via Tectonic ou latexmk :
   `rapport/build.sh`), figures vectorielles produites par `rapport/figures.py`.
+* `maquette/index.html` : la maquette de l'interface du pilote (console de planification), trois
+  écrans construits par `maquette/build_maquette.py` à partir des résultats réels du pilote ; aussi
+  en PDF (`maquette/maquette.pdf`) et en PNG.
 
 ## Organisation du code
 
@@ -102,6 +105,7 @@ le fichier de commandes (`RAPPORT.md`, § 5).
 | `experiments/` | harnais d'expériences et analyses (voir `experiments/README.md`) |
 | `demo/` | démo visuelle pas à pas (`index.html`, données `data.js`, extraction `build_demo_data.py`) |
 | `rapport/` | rapport LaTeX publiable (`rapport.tex`, `build.sh`, `figures.py`, `rapport.pdf`) |
+| `maquette/` | maquette de l'interface du pilote (`index.html`, `maquette.pdf`, `build_maquette.py`) |
 | `tests/` | tests unitaires des features et test de bout en bout `train.py` → `predict.py` |
 | `run_all.sh` | relance toute la chaîne de livrables (~4 h sur 6 cœurs) |
 

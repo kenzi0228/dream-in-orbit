@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1440">
+<title>Comparer des plannings — maquette du pilote</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>body{margin:0;background:#fcfcfb}
+*{box-sizing:border-box}
+.frame{position:relative;overflow:hidden;display:flex;flex-direction:column;font-size:13px;line-height:1.4;-webkit-font-smoothing:antialiased}
+.frame a{color:#1c5cab}
+.topbar{height:56px;flex:none;display:flex;align-items:center;gap:20px;padding:0 24px;border-bottom:1px solid #e4e2dc;background:#ffffff}
+.brand{display:flex;align-items:center;gap:10px;font-weight:600;font-size:14px;white-space:nowrap}
+.brand .dot{width:10px;height:10px;border-radius:50%;background:#2a78d6}
+.brand .sub{color:#6f6e69;font-weight:400;font-size:13px}
+.tabs{display:flex;gap:4px;margin-left:12px}
+.tab{padding:7px 12px;border-radius:6px;color:#52514e;text-decoration:none;font-weight:500}
+.tab.on{background:#e9f1fb;color:#1c5cab}
+.topright{margin-left:auto;display:flex;align-items:center;gap:10px;color:#52514e;font-size:12px;white-space:nowrap}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:3px 9px;border-radius:999px;border:1px solid #e4e2dc;background:#ffffff;font-size:11.5px;color:#0b0b0b;font-weight:500;white-space:nowrap}
+.chip .sw{width:8px;height:8px;border-radius:50%;flex:none}
+.chip.ok{margin-left:8px}
+.main{flex:1;padding:18px 24px 22px;display:flex;flex-direction:column;gap:14px;min-height:0}
+.titlerow{display:flex;align-items:flex-end;gap:16px;flex:none}
+h1{margin:0;font-size:20px;font-weight:600;letter-spacing:-0.01em;line-height:1.25}
+h2{margin:0;font-size:13px;font-weight:600}
+h3{margin:6px 0 0;font-size:12px;font-weight:600;color:#52514e}
+.sub{color:#52514e;font-size:12.5px;margin-top:2px}
+.muted{color:#6f6e69}
+.controls{display:flex;align-items:flex-end;gap:10px;margin-left:auto;flex:none}
+.field{display:flex;flex-direction:column;gap:4px;font-size:11px;color:#6f6e69}
+.field input,.field select{height:34px;border:1px solid #d6d4cd;border-radius:6px;padding:0 10px;font:inherit;font-size:13px;color:#0b0b0b;background:#ffffff;min-width:150px}
+.btn{height:36px;padding:0 14px;border-radius:6px;border:1px solid #d6d4cd;background:#ffffff;font:inherit;font-size:13px;font-weight:500;color:#0b0b0b;display:inline-flex;align-items:center;gap:8px;cursor:pointer;white-space:nowrap}
+.btn.primary{background:#1c5cab;border-color:#1c5cab;color:#fff}
+.tiles{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;flex:none}
+.tile{background:#ffffff;border:1px solid #e4e2dc;border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:2px}
+.tile .lab{font-size:11.5px;color:#52514e}
+.tile .val{font-size:26px;font-weight:600;letter-spacing:-0.02em;line-height:1.15}
+.tile .hint{font-size:11px;color:#6f6e69}
+.cols{display:flex;gap:14px;flex:1;min-height:0}
+.col-l{flex:1;min-width:0;display:flex;flex-direction:column;gap:14px}
+.col-r{width:396px;flex:none;display:flex;flex-direction:column;gap:14px}
+.panel{background:#ffffff;border:1px solid #e4e2dc;border-radius:8px;padding:14px 16px;display:flex;flex-direction:column;gap:10px;min-height:0}
+.phead{display:flex;align-items:baseline;gap:16px;flex-wrap:wrap}
+.phead .legend{margin-left:auto}
+.note{font-size:11.5px;color:#52514e;line-height:1.45}
+.warn{font-size:11.5px;color:#0b0b0b;background:#fbf4e4;border:1px solid #f0dfb0;border-radius:6px;padding:8px 10px;line-height:1.45}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:11.5px;color:#52514e;align-items:center}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.legend i.line{height:2px;border-radius:1px;vertical-align:3px;width:14px}
+table{border-collapse:collapse;width:100%;font-size:12px;font-variant-numeric:tabular-nums}
+th{text-align:left;font-weight:500;color:#6f6e69;font-size:11px;padding:4px 6px;border-bottom:1px solid #e4e2dc;white-space:nowrap}
+td{padding:6px 6px;border-bottom:1px solid #f0eee9;white-space:nowrap}
+td.num,th.num{text-align:right}
+.bar{display:inline-block;height:6px;border-radius:3px;background:#2a78d6;vertical-align:middle;margin-right:6px}
+.facts{margin:0;padding-left:18px;font-size:12px;color:#0b0b0b;line-height:1.5;display:flex;flex-direction:column;gap:6px}
+svg text{font-family:inherit}
+.axis{font-size:11px;fill:#6f6e69}
+.scen-list{width:420px;flex:none}
+.scens{border:0;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.scen{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid #e4e2dc;border-radius:8px;cursor:pointer;background:#ffffff}
+.scen.sel{border-color:#1c5cab;box-shadow:0 0 0 2px #e9f1fb}
+.scen input{margin:0;width:16px;height:16px;flex:none}
+.scen-l{display:flex;flex-direction:column;gap:4px;min-width:0;flex:1}
+.scen-l .nm{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dots{display:flex;align-items:center;gap:3px;height:18px}
+.dots i{width:8px;height:8px;border-radius:50%;background:#ebe9e3;display:inline-block}
+.dots i.on{background:#52514e}
+.scen-r{display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex:none}
+.scen-r .val{font-weight:600;font-size:15px;font-variant-numeric:tabular-nums}
+.scen-r .muted{font-size:11px}
+.detail{width:380px;flex:none}
+.kpi{display:flex;flex-direction:column;gap:2px;margin-top:4px}
+.kpi .val{font-size:30px;font-weight:600;letter-spacing:-0.02em;line-height:1.1}
+.kpi .muted{font-size:11.5px}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto}
+.params{width:380px;flex:none}
+.vform{display:flex;flex-direction:column;gap:10px}
+.vform .field input,.vform .field select{width:100%}
+.check{display:flex;gap:8px;align-items:flex-start;font-size:12px;line-height:1.4;color:#0b0b0b}
+.check input{margin:2px 0 0;flex:none;width:15px;height:15px}
+.result{display:flex;align-items:center;gap:16px;border:1px solid #e4e2dc;border-radius:8px;padding:10px 14px;background:#fcfcfb}
+.result > div:first-child{display:flex;flex-direction:column;gap:2px;min-width:0}
+.result .lab{font-size:11.5px;color:#52514e}
+.result .val{font-size:24px;font-weight:600;letter-spacing:-0.02em;line-height:1.15}
+.result .muted{font-size:11.5px}
+.result .actions{margin:0 0 0 auto;flex:none}
+.kept{width:300px;flex:none}
+.ghost{border:1px dashed #cfcdc6;border-radius:8px;padding:12px;color:#52514e;font-size:12.5px;display:flex;gap:8px;align-items:center;margin-top:6px}
+.steps{margin:0;padding-left:18px;font-size:12px;line-height:1.5;display:flex;flex-direction:column;gap:6px;color:#0b0b0b}
+.scroll{overflow:auto;min-height:0;flex:1}
+</style>
+</head>
+<body>
+<div class="frame" lang="fr" style="width:1440px;height:1000px;background:#fcfcfb;color:#0b0b0b;font-family:Inter,system-ui,sans-serif">
+<header class="topbar"><div class="brand"><span class="dot"></span>Dream in Orbit<span class="sub">Console de planification</span></div><nav class="tabs" aria-label="Écrans"><a class="tab" href="Main.dc.html">Rêve</a><a class="tab on" href="#">Scénarios</a><a class="tab" href="Optimiseur.dc.html">Optimiseur</a></nav><div class="topright"><span>Mars Express · annee2 (validation) · poids weights_holdout</span><span class="chip"><span class="sw" style="background:#2a78d6"></span>World model 0,5 GRU + 0,5 GBM</span><span class="chip">RMSE strict 0,0750</span></div></header>
+<main class="main">
+<div class="titlerow"><div><h1>Comparer des plannings sur la fenêtre du 25 oct. au 7 nov. 2010</h1>
+<div class="sub">Comparaison appariée : chaque membre de l’ensemble simule le planning réel et le planning modifié ; l’incertitude porte sur la différence, pas sur le niveau.</div></div>
+<div class="controls"><button class="btn" type="button"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3v10M3 8h10"></path></svg>Nouveau scénario</button><button class="btn primary" type="button"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3l10 5-10 5z"></path></svg>Simuler les 4 scénarios</button></div></div>
+<div class="cols">
+<section class="panel scen-list"><h2>Scénarios</h2><fieldset class="scens"><legend class="sr">Choisir un scénario</legend><label class="scen"><input type="radio" name="scen" value="reel"><span class="scen-l"><span class="nm">Planning réel (référence)</span><span class="dots"></span></span><span class="scen-r"><span class="val">1 728,4</span><span class="muted">mesuré : 1 726,2</span></span></label><label class="scen sel"><input type="radio" name="scen" value="hors_comms_tout_EARTH" checked="checked"><span class="scen-l"><span class="nm">Tout en EARTH hors communication</span><span class="dots"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><span class="chip ok"><span class="sw" style="background:#0ca30c"></span><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8l3 3 7-7"></path></svg>robuste</span></span></span><span class="scen-r"><span class="val">−0,62 %</span><span class="muted">1 717,6 · ± 0,07 %</span></span></label><label class="scen"><input type="radio" name="scen" value="hors_comms_tout_NADIR"><span class="scen-l"><span class="nm">Tout en NADIR hors communication</span><span class="dots"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><span class="chip ok"><span class="sw" style="background:#0ca30c"></span><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8l3 3 7-7"></path></svg>robuste</span></span></span><span class="scen-r"><span class="val">−0,60 %</span><span class="muted">1 718,0 · ± 0,26 %</span></span></label><label class="scen"><input type="radio" name="scen" value="hors_comms_sans_manoeuvres"><span class="scen-l"><span class="nm">Sans manœuvres (SLEW rendu à EARTH)</span><span class="dots"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><span class="chip ok"><span class="sw" style="background:#0ca30c"></span><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8l3 3 7-7"></path></svg>robuste</span></span></span><span class="scen-r"><span class="val">−0,20 %</span><span class="muted">1 724,9 · ± 0,03 %</span></span></label><label class="scen"><input type="radio" name="scen" value="recherche_locale"><span class="scen-l"><span class="nm">Recherche locale (15 permutations gardées)</span><span class="dots"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><span class="chip ok"><span class="sw" style="background:#0ca30c"></span><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8l3 3 7-7"></path></svg>robuste</span></span></span><span class="scen-r"><span class="val">−0,05 %</span><span class="muted">1 727,6 · ± 0,01 %</span></span></label></fieldset>
+<div class="ghost"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3v10M3 8h10"></path></svg>Créer un scénario à partir du planning réel</div>
+<div class="note">Les fenêtres de communication avec la Terre ne sont jamais modifiées ; les features dérivées (anticipation, inertie) sont recalculées après chaque modification.</div></section>
+<section class="panel"><div class="phead"><h2>Écart d’énergie par rapport au planning réel</h2><div class="legend"><span><i style="background:#2a78d6"></i>Économie</span><span><i style="background:#e34948"></i>Surcoût</span><span><i class="line" style="background:#0b0b0b"></i>± dispersion des membres</span></div></div>
+<svg width="560" height="242" viewBox="0 0 560 242" role="img" aria-label="Écart d’énergie de chaque scénario par rapport au planning réel, avec la dispersion des membres"><line x1="357.1" x2="357.1" y1="22" y2="212" stroke="#ebe9e3" stroke-width="1"></line><text x="357.1" y="228" text-anchor="middle" class="axis">−0,5 %</text><line x1="415.0" x2="415.0" y1="22" y2="212" stroke="#ebe9e3" stroke-width="1"></line><text x="415.0" y="228" text-anchor="middle" class="axis">0</text><line x1="472.9" x2="472.9" y1="22" y2="212" stroke="#ebe9e3" stroke-width="1"></line><text x="472.9" y="228" text-anchor="middle" class="axis">+0,5 %</text><line x1="415.0" x2="415.0" y1="18" y2="212" stroke="#52514e" stroke-width="1"></line><text x="300.0" y="16" class="axis">← économie</text><text x="530.0" y="16" text-anchor="end" class="axis">surcoût →</text><rect x="342.9" y="44.0" width="72.1" height="14" rx="4" fill="#2a78d6"></rect><line x1="334.2" x2="351.5" y1="51.0" y2="51.0" stroke="#0b0b0b" stroke-width="1.4"></line><line x1="334.2" x2="334.2" y1="47.0" y2="55.0" stroke="#0b0b0b" stroke-width="1.4"></line><line x1="351.5" x2="351.5" y1="47.0" y2="55.0" stroke="#0b0b0b" stroke-width="1.4"></line><text x="288" y="55.0" text-anchor="end" font-size="12" fill="#0b0b0b">Tout en EARTH hors communication</text><text x="423.0" y="55.0" text-anchor="start" font-size="12" font-weight="600" fill="#0b0b0b">−0,62 %</text><rect x="345.5" y="90.0" width="69.5" height="14" rx="4" fill="#2a78d6"></rect><line x1="315.0" x2="376.0" y1="97.0" y2="97.0" stroke="#0b0b0b" stroke-width="1.4"></line><line x1="315.0" x2="315.0" y1="93.0" y2="101.0" stroke="#0b0b0b" stroke-width="1.4"></line><line x1="376.0" x2="376.0" y1="93.0" y2="101.0" stroke="#0b0b0b" stroke-width="1.4"></line><text x="288" y="101.0" text-anchor="end" font-size="12" fill="#0b0b0b">Tout en NADIR hors communication</text><text x="423.0" y="101.0" text-anchor="start" font-size="12" font-weight="600" fill="#0b0b0b">−0,60 %</text><rect x="391.9" y="136.0" width="23.1" height="14" rx="4" fill="#2a78d6"></rect><line x1="388.4" x2="395.4" y1="143.0" y2="143.0" stroke="#0b0b0b" stroke-width="1.4"></line><line x1="388.4" x2="388.4" y1="139.0" y2="147.0" stroke="#0b0b0b" stroke-width="1.4"></line><line x1="395.4" x2="395.4" y1="139.0" y2="147.0" stroke="#0b0b0b" stroke-width="1.4"></line><text x="288" y="147.0" text-anchor="end" font-size="12" fill="#0b0b0b">Sans manœuvres (SLEW rendu à EARTH)</text><text x="423.0" y="147.0" text-anchor="start" font-size="12" font-weight="600" fill="#0b0b0b">−0,20 %</text><rect x="409.5" y="182.0" width="5.5" height="14" rx="0" fill="#2a78d6"></rect><line x1="407.8" x2="411.2" y1="189.0" y2="189.0" stroke="#0b0b0b" stroke-width="1.4"></line><line x1="407.8" x2="407.8" y1="185.0" y2="193.0" stroke="#0b0b0b" stroke-width="1.4"></line><line x1="411.2" x2="411.2" y1="185.0" y2="193.0" stroke="#0b0b0b" stroke-width="1.4"></line><text x="288" y="193.0" text-anchor="end" font-size="12" fill="#0b0b0b">Recherche locale (15 permutations gardées)</text><text x="423.0" y="193.0" text-anchor="start" font-size="12" font-weight="600" fill="#0b0b0b">−0,05 %</text></svg>
+<h3>Les mêmes chiffres en tableau</h3><table><thead><tr><th>Scénario</th><th class="num">Énergie</th><th class="num">Écart</th><th class="num">Dispersion</th><th class="num">Accord</th></tr></thead><tbody><tr><td>Planning réel (référence)</td><td class="num">1 728,4</td><td class="num">–</td><td class="num">± 10,2</td><td class="num">–</td></tr><tr><td>Tout en EARTH hors communication</td><td class="num">1 717,6</td><td class="num">−0,62 %</td><td class="num">± 0,07 %</td><td class="num">5 / 5</td></tr><tr><td>Tout en NADIR hors communication</td><td class="num">1 718,0</td><td class="num">−0,60 %</td><td class="num">± 0,26 %</td><td class="num">5 / 5</td></tr><tr><td>Sans manœuvres (SLEW rendu à EARTH)</td><td class="num">1 724,9</td><td class="num">−0,20 %</td><td class="num">± 0,03 %</td><td class="num">5 / 5</td></tr><tr><td>Recherche locale (15 permutations gardées)</td><td class="num">1 727,6</td><td class="num">−0,05 %</td><td class="num">± 0,01 %</td><td class="num">5 / 5</td></tr></tbody></table>
+<div class="note">Énergie du planning réel simulé : 1 728,4 (mesurée : 1 726,2). Un scénario est « robuste » quand les 5 membres sont d’accord sur le signe de la différence.</div></section>
+<section class="panel detail"><h2>Tout en EARTH hors communication</h2><div class="sub">Hors communication, tout en pointage EARTH (plus d’observation)</div>
+<div class="kpi"><span class="val">−0,62 %</span><span class="muted">−10,8 sur 14 jours · ± 0,07 % · 5 membres sur 5</span></div>
+<h3>Heures par mode de pointage sur la fenêtre</h3>
+<table><thead><tr><th>Mode</th><th class="num">Réel</th><th class="num">Scénario</th><th class="num">Δ</th></tr></thead><tbody><tr><td>Terre (EARTH)</td><td class="num">228 h</td><td class="num"><strong>320 h</strong></td><td class="num ">+92 h</td></tr><tr><td>Radio-science</td><td class="num">52 h</td><td class="num"><strong>52 h</strong></td><td class="num muted">0 h</td></tr><tr><td>Manœuvre (SLEW)</td><td class="num">45 h</td><td class="num"><strong>11 h</strong></td><td class="num ">−34 h</td></tr><tr><td>Nadir</td><td class="num">15 h</td><td class="num"><strong>2 h</strong></td><td class="num ">−13 h</td></tr><tr><td>Maintenance</td><td class="num">20 h</td><td class="num"><strong>2 h</strong></td><td class="num ">−18 h</td></tr><tr><td>D4PNPO</td><td class="num">11 h</td><td class="num"><strong>0 h</strong></td><td class="num ">−10 h</td></tr><tr><td>Autres pointages</td><td class="num">17 h</td><td class="num"><strong>1 h</strong></td><td class="num ">−16 h</td></tr></tbody></table>
+<div class="note">218 heures hors communication sont modifiables sur 336.</div>
+<div class="actions"><button class="btn primary" type="button"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3l10 5-10 5z"></path></svg>Rêver ce scénario en détail</button><button class="btn" type="button"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v8M4 7l4 4 4-4M3 13h10"></path></svg>Exporter le planning</button></div>
+<div class="warn">Rien ici n’est vérifiable contre la réalité : ces plannings n’ont pas volé. Le pilote mesure ce que le modèle croit, pas ce que le satellite ferait.</div></section>
+</div></main></div>
+</body>
+</html>

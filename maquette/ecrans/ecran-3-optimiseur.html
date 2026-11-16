@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1440">
+<title>Optimiser par recherche locale — maquette du pilote</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>body{margin:0;background:#fcfcfb}
+*{box-sizing:border-box}
+.frame{position:relative;overflow:hidden;display:flex;flex-direction:column;font-size:13px;line-height:1.4;-webkit-font-smoothing:antialiased}
+.frame a{color:#1c5cab}
+.topbar{height:56px;flex:none;display:flex;align-items:center;gap:20px;padding:0 24px;border-bottom:1px solid #e4e2dc;background:#ffffff}
+.brand{display:flex;align-items:center;gap:10px;font-weight:600;font-size:14px;white-space:nowrap}
+.brand .dot{width:10px;height:10px;border-radius:50%;background:#2a78d6}
+.brand .sub{color:#6f6e69;font-weight:400;font-size:13px}
+.tabs{display:flex;gap:4px;margin-left:12px}
+.tab{padding:7px 12px;border-radius:6px;color:#52514e;text-decoration:none;font-weight:500}
+.tab.on{background:#e9f1fb;color:#1c5cab}
+.topright{margin-left:auto;display:flex;align-items:center;gap:10px;color:#52514e;font-size:12px;white-space:nowrap}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:3px 9px;border-radius:999px;border:1px solid #e4e2dc;background:#ffffff;font-size:11.5px;color:#0b0b0b;font-weight:500;white-space:nowrap}
+.chip .sw{width:8px;height:8px;border-radius:50%;flex:none}
+.chip.ok{margin-left:8px}
+.main{flex:1;padding:18px 24px 22px;display:flex;flex-direction:column;gap:14px;min-height:0}
+.titlerow{display:flex;align-items:flex-end;gap:16px;flex:none}
+h1{margin:0;font-size:20px;font-weight:600;letter-spacing:-0.01em;line-height:1.25}
+h2{margin:0;font-size:13px;font-weight:600}
+h3{margin:6px 0 0;font-size:12px;font-weight:600;color:#52514e}
+.sub{color:#52514e;font-size:12.5px;margin-top:2px}
+.muted{color:#6f6e69}
+.controls{display:flex;align-items:flex-end;gap:10px;margin-left:auto;flex:none}
+.field{display:flex;flex-direction:column;gap:4px;font-size:11px;color:#6f6e69}
+.field input,.field select{height:34px;border:1px solid #d6d4cd;border-radius:6px;padding:0 10px;font:inherit;font-size:13px;color:#0b0b0b;background:#ffffff;min-width:150px}
+.btn{height:36px;padding:0 14px;border-radius:6px;border:1px solid #d6d4cd;background:#ffffff;font:inherit;font-size:13px;font-weight:500;color:#0b0b0b;display:inline-flex;align-items:center;gap:8px;cursor:pointer;white-space:nowrap}
+.btn.primary{background:#1c5cab;border-color:#1c5cab;color:#fff}
+.tiles{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;flex:none}
+.tile{background:#ffffff;border:1px solid #e4e2dc;border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:2px}
+.tile .lab{font-size:11.5px;color:#52514e}
+.tile .val{font-size:26px;font-weight:600;letter-spacing:-0.02em;line-height:1.15}
+.tile .hint{font-size:11px;color:#6f6e69}
+.cols{display:flex;gap:14px;flex:1;min-height:0}
+.col-l{flex:1;min-width:0;display:flex;flex-direction:column;gap:14px}
+.col-r{width:396px;flex:none;display:flex;flex-direction:column;gap:14px}
+.panel{background:#ffffff;border:1px solid #e4e2dc;border-radius:8px;padding:14px 16px;display:flex;flex-direction:column;gap:10px;min-height:0}
+.phead{display:flex;align-items:baseline;gap:16px;flex-wrap:wrap}
+.phead .legend{margin-left:auto}
+.note{font-size:11.5px;color:#52514e;line-height:1.45}
+.warn{font-size:11.5px;color:#0b0b0b;background:#fbf4e4;border:1px solid #f0dfb0;border-radius:6px;padding:8px 10px;line-height:1.45}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:11.5px;color:#52514e;align-items:center}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.legend i.line{height:2px;border-radius:1px;vertical-align:3px;width:14px}
+table{border-collapse:collapse;width:100%;font-size:12px;font-variant-numeric:tabular-nums}
+th{text-align:left;font-weight:500;color:#6f6e69;font-size:11px;padding:4px 6px;border-bottom:1px solid #e4e2dc;white-space:nowrap}
+td{padding:6px 6px;border-bottom:1px solid #f0eee9;white-space:nowrap}
+td.num,th.num{text-align:right}
+.bar{display:inline-block;height:6px;border-radius:3px;background:#2a78d6;vertical-align:middle;margin-right:6px}
+.facts{margin:0;padding-left:18px;font-size:12px;color:#0b0b0b;line-height:1.5;display:flex;flex-direction:column;gap:6px}
+svg text{font-family:inherit}
+.axis{font-size:11px;fill:#6f6e69}
+.scen-list{width:420px;flex:none}
+.scens{border:0;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.scen{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid #e4e2dc;border-radius:8px;cursor:pointer;background:#ffffff}
+.scen.sel{border-color:#1c5cab;box-shadow:0 0 0 2px #e9f1fb}
+.scen input{margin:0;width:16px;height:16px;flex:none}
+.scen-l{display:flex;flex-direction:column;gap:4px;min-width:0;flex:1}
+.scen-l .nm{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dots{display:flex;align-items:center;gap:3px;height:18px}
+.dots i{width:8px;height:8px;border-radius:50%;background:#ebe9e3;display:inline-block}
+.dots i.on{background:#52514e}
+.scen-r{display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex:none}
+.scen-r .val{font-weight:600;font-size:15px;font-variant-numeric:tabular-nums}
+.scen-r .muted{font-size:11px}
+.detail{width:380px;flex:none}
+.kpi{display:flex;flex-direction:column;gap:2px;margin-top:4px}
+.kpi .val{font-size:30px;font-weight:600;letter-spacing:-0.02em;line-height:1.1}
+.kpi .muted{font-size:11.5px}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto}
+.params{width:380px;flex:none}
+.vform{display:flex;flex-direction:column;gap:10px}
+.vform .field input,.vform .field select{width:100%}
+.check{display:flex;gap:8px;align-items:flex-start;font-size:12px;line-height:1.4;color:#0b0b0b}
+.check input{margin:2px 0 0;flex:none;width:15px;height:15px}
+.result{display:flex;align-items:center;gap:16px;border:1px solid #e4e2dc;border-radius:8px;padding:10px 14px;background:#fcfcfb}
+.result > div:first-child{display:flex;flex-direction:column;gap:2px;min-width:0}
+.result .lab{font-size:11.5px;color:#52514e}
+.result .val{font-size:24px;font-weight:600;letter-spacing:-0.02em;line-height:1.15}
+.result .muted{font-size:11.5px}
+.result .actions{margin:0 0 0 auto;flex:none}
+.kept{width:300px;flex:none}
+.ghost{border:1px dashed #cfcdc6;border-radius:8px;padding:12px;color:#52514e;font-size:12.5px;display:flex;gap:8px;align-items:center;margin-top:6px}
+.steps{margin:0;padding-left:18px;font-size:12px;line-height:1.5;display:flex;flex-direction:column;gap:6px;color:#0b0b0b}
+.scroll{overflow:auto;min-height:0;flex:1}
+</style>
+</head>
+<body>
+<div class="frame" lang="fr" style="width:1440px;height:1000px;background:#fcfcfb;color:#0b0b0b;font-family:Inter,system-ui,sans-serif">
+<header class="topbar"><div class="brand"><span class="dot"></span>Dream in Orbit<span class="sub">Console de planification</span></div><nav class="tabs" aria-label="Écrans"><a class="tab" href="Main.dc.html">Rêve</a><a class="tab" href="Scenarios.dc.html">Scénarios</a><a class="tab on" href="#">Optimiseur</a></nav><div class="topright"><span>Mars Express · annee2 (validation) · poids weights_holdout</span><span class="chip"><span class="sw" style="background:#2a78d6"></span>World model 0,5 GRU + 0,5 GBM</span><span class="chip">RMSE strict 0,0750</span></div></header>
+<main class="main">
+<div class="titlerow"><div><h1>Optimiser le planning réel par recherche locale</h1>
+<div class="sub">Permutation de deux heures de pointage hors communication dans une même journée : même volume d’observation par mode et par jour, fenêtres de communication intouchées.</div></div>
+<div class="controls"><span class="chip"><span class="sw" style="background:#0ca30c"></span>Terminé · 120 itérations · 15 gardées</span></div></div>
+<div class="cols">
+<section class="panel params"><h2>Paramètres</h2>
+<form action="#" class="vform"><div class="field"><label for="iters">Itérations</label><input id="iters" type="number" value="120"></div>
+<div class="field"><label for="graine">Graine aléatoire</label><input id="graine" type="number" value="0"></div>
+<div class="field"><label for="jours">Journées concernées</label><select id="jours"><option>Les 14 jours de la fenêtre</option><option>Une journée</option></select></div>
+<label class="check"><input type="checkbox" checked="checked"> Garder une permutation seulement si les 5 membres la jugent économique</label>
+<label class="check"><input type="checkbox" checked="checked"> Recalculer les features dérivées après chaque permutation</label>
+<button class="btn primary" type="button"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3l10 5-10 5z"></path></svg>Lancer la recherche</button></form>
+<div class="note">Chaque itération simule la fenêtre entière avec les 5 membres (environ 2 s sur 6 cœurs).</div>
+<h3>Une itération</h3><ol class="steps"><li>Tirer une journée de la fenêtre et deux de ses heures hors communication aux pointages différents.</li><li>Échanger leurs pointages, recalculer les features dérivées (anticipation, inertie).</li><li>Rêver la fenêtre avec les 5 membres ; garder l’échange seulement si chacun prédit moins d’énergie.</li></ol></section>
+<section class="panel"><div class="phead"><h2>Énergie simulée au fil des itérations</h2><div class="legend"><span><i class="line" style="background:#2a78d6"></i>Meilleur planning courant</span><span><i style="background:#2a78d6;border-radius:50%"></i>Permutation gardée</span></div></div>
+<svg width="640" height="430" viewBox="0 0 640 430" role="img" aria-label="Énergie simulée au fil des itérations de la recherche locale"><line x1="60" x2="616" y1="402.0" y2="402.0" stroke="#ebe9e3" stroke-width="1"></line><text x="52" y="406.0" text-anchor="end" class="axis">1 727,4</text><line x1="60" x2="616" y1="338.0" y2="338.0" stroke="#ebe9e3" stroke-width="1"></line><text x="52" y="342.0" text-anchor="end" class="axis">1 727,6</text><line x1="60" x2="616" y1="274.0" y2="274.0" stroke="#ebe9e3" stroke-width="1"></line><text x="52" y="278.0" text-anchor="end" class="axis">1 727,8</text><line x1="60" x2="616" y1="210.0" y2="210.0" stroke="#ebe9e3" stroke-width="1"></line><text x="52" y="214.0" text-anchor="end" class="axis">1 728,0</text><line x1="60" x2="616" y1="146.0" y2="146.0" stroke="#ebe9e3" stroke-width="1"></line><text x="52" y="150.0" text-anchor="end" class="axis">1 728,2</text><line x1="60" x2="616" y1="82.0" y2="82.0" stroke="#ebe9e3" stroke-width="1"></line><text x="52" y="86.0" text-anchor="end" class="axis">1 728,4</text><line x1="60" x2="616" y1="18.0" y2="18.0" stroke="#ebe9e3" stroke-width="1"></line><text x="52" y="22.0" text-anchor="end" class="axis">1 728,6</text><text x="60.0" y="420" text-anchor="middle" class="axis">0</text><text x="152.7" y="420" text-anchor="middle" class="axis">20</text><text x="245.3" y="420" text-anchor="middle" class="axis">40</text><text x="338.0" y="420" text-anchor="middle" class="axis">60</text><text x="430.7" y="420" text-anchor="middle" class="axis">80</text><text x="523.3" y="420" text-anchor="middle" class="axis">100</text><text x="616.0" y="420" text-anchor="middle" class="axis">120</text><line x1="60" x2="616" y1="402" y2="402" stroke="#e4e2dc" stroke-width="1"></line><path d="M60.0,85.4 L64.6,85.4 L64.6,96.5 L101.7,96.5 L101.7,106.6 L157.3,106.6 L157.3,116.6 L161.9,116.6 L161.9,129.3 L175.8,129.3 L175.8,142.4 L208.3,142.4 L208.3,164.4 L240.7,164.4 L240.7,185.8 L259.2,185.8 L259.2,188.8 L310.2,188.8 L310.2,195.1 L338.0,195.1 L338.0,206.8 L361.2,206.8 L361.2,219.6 L398.2,219.6 L398.2,231.7 L439.9,231.7 L439.9,261.9 L514.1,261.9 L514.1,317.1 L602.1,317.1 L602.1,347.2 L616.0,347.2" fill="none" stroke="#2a78d6" stroke-width="2" stroke-linejoin="round"></path><circle cx="64.6" cy="96.5" r="4" fill="#2a78d6" stroke="#ffffff" stroke-width="2"></circle><circle cx="101.7" cy="106.6" r="4" fill="#2a78d6" stroke="#ffffff" stroke-width="2"></circle><circle cx="157.3" cy="116.6" r="4" fill="#2a78d6" stroke="#ffffff" stroke-width="2"></circle><circle cx="161.9" cy="129.3" r="4" fill="#2a78d6" stroke="#ffffff" stroke-width="2"></circle><circle cx="175.8" cy="142.4" r="4" fill="#2a78d6" stroke="#ffffff" stroke-width="2"></circle><circle cx="208.3" cy="164.4" r="4" fill="#2a78d6" stroke="#ffffff" stroke-width="2"></circle><circle cx="240.7" cy="185.8" r="4" fill="#2a78d6" stroke="#ffffff" stroke-width="2"></circle><circle cx="259.2" cy="188.8" r="4" fill="#2a78d6" stroke="#ffffff" stroke-width="2"></circle><circle cx="310.2" cy="195.1" r="4" fill="#2a78d6" stroke="#ffffff" stroke-width="2"></circle><circle cx="338.0" cy="206.8" r="4" fill="#2a78d6" stroke="#ffffff" stroke-width="2"></circle><circle cx="361.2" cy="219.6" r="4" fill="#2a78d6" stroke="#ffffff" stroke-width="2"></circle><circle cx="398.2" cy="231.7" r="4" fill="#2a78d6" stroke="#ffffff" stroke-width="2"></circle><circle cx="439.9" cy="261.9" r="4" fill="#2a78d6" stroke="#ffffff" stroke-width="2"></circle><circle cx="514.1" cy="317.1" r="4" fill="#2a78d6" stroke="#ffffff" stroke-width="2"></circle><circle cx="602.1" cy="347.2" r="4" fill="#2a78d6" stroke="#ffffff" stroke-width="2"></circle><text x="66.0" y="77.4" font-size="11.5" font-weight="600" fill="#0b0b0b">Départ 1 728,4</text><text x="616.0" y="365.2" text-anchor="end" font-size="11.5" font-weight="600" fill="#0b0b0b">Arrivée 1 727,6 (−0,05 %)</text></svg>
+<div class="result"><div><span class="lab">Planning optimisé</span><span class="val">1 727,6</span><span class="muted">−0,05 % par rapport au réel simulé (1 728,4) · ± 0,015 % · 5 membres sur 5</span></div>
+<div class="actions"><button class="btn primary" type="button"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 8l12-5-4 12-2-5z"></path></svg>Proposer ce planning</button><button class="btn" type="button"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v8M4 7l4 4 4-4M3 13h10"></path></svg>pilot.planning.csv</button></div></div>
+<div class="warn">Un gain de 0,05 % est en dessous de ce que le modèle sait distinguer de la réalité (écart prédit − mesuré : +0,13 %). Il montre la mécanique de l’outil, pas une économie démontrée.</div></section>
+<section class="panel kept"><h2>Permutations gardées</h2>
+<div class="scroll"><table><thead><tr><th class="num">Itération</th><th class="num">Énergie</th><th class="num">Gain cumulé</th></tr></thead><tbody><tr><td class="num">1</td><td class="num">1 728,35</td><td class="num">−0,002 %</td></tr><tr><td class="num">9</td><td class="num">1 728,32</td><td class="num">−0,004 %</td></tr><tr><td class="num">21</td><td class="num">1 728,29</td><td class="num">−0,006 %</td></tr><tr><td class="num">22</td><td class="num">1 728,25</td><td class="num">−0,008 %</td></tr><tr><td class="num">25</td><td class="num">1 728,21</td><td class="num">−0,010 %</td></tr><tr><td class="num">32</td><td class="num">1 728,14</td><td class="num">−0,014 %</td></tr><tr><td class="num">39</td><td class="num">1 728,08</td><td class="num">−0,018 %</td></tr><tr><td class="num">43</td><td class="num">1 728,07</td><td class="num">−0,019 %</td></tr><tr><td class="num">54</td><td class="num">1 728,05</td><td class="num">−0,020 %</td></tr><tr><td class="num">60</td><td class="num">1 728,01</td><td class="num">−0,022 %</td></tr><tr><td class="num">65</td><td class="num">1 727,97</td><td class="num">−0,024 %</td></tr><tr><td class="num">73</td><td class="num">1 727,93</td><td class="num">−0,026 %</td></tr><tr><td class="num">82</td><td class="num">1 727,84</td><td class="num">−0,032 %</td></tr><tr><td class="num">98</td><td class="num">1 727,67</td><td class="num">−0,042 %</td></tr><tr><td class="num">117</td><td class="num">1 727,57</td><td class="num">−0,047 %</td></tr></tbody></table></div>
+<div class="note">Gain total : −0,82 (−0,047 %) sur 1 728,4.</div></section>
+</div></main></div>
+</body>
+</html>
