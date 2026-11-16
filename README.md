@@ -71,6 +71,17 @@ protocoles ci-dessus : attendez-vous à 0,0805-0,0901 sur une année nouvelle. D
 chauffage font 63 % de l'erreur, et leur décrochage de 2011 coïncide avec un trou de 14 jours dans
 le fichier de commandes (`RAPPORT.md`, § 5).
 
+## Démo pas à pas et rapport PDF
+
+* `demo/index.html` : une démo visuelle en quinze étapes, de la mesure brute au pilote (grille
+  horaire, pièges des données, features, modèle, entraînement, rêve contre réalité avec curseur et
+  bande d'incertitude, résultats, calibration, décrochage de 2011, ablations, pilote, limites).
+  Elle s'ouvre directement dans un navigateur, sans serveur ni bibliothèque externe ; ses données
+  (`demo/data.js`) sont extraites des fichiers de `weights_holdout/`, `validation/` et `reports/`
+  par `demo/build_demo_data.py`.
+* `rapport/rapport.pdf` : le rapport en version article (LaTeX, XeLaTeX via Tectonic ou latexmk :
+  `rapport/build.sh`), figures vectorielles produites par `rapport/figures.py`.
+
 ## Organisation du code
 
 | Fichier | Contenu |
@@ -89,6 +100,8 @@ le fichier de commandes (`RAPPORT.md`, § 5).
 | `demo.py` | figures « rêve contre réalité », dérive, erreur par circuit, calibration (`reports/figures/`) |
 | `pilot.py` | bonus : comparaison appariée de plannings alternatifs (`reports/pilot.json`) |
 | `experiments/` | harnais d'expériences et analyses (voir `experiments/README.md`) |
+| `demo/` | démo visuelle pas à pas (`index.html`, données `data.js`, extraction `build_demo_data.py`) |
+| `rapport/` | rapport LaTeX publiable (`rapport.tex`, `build.sh`, `figures.py`, `rapport.pdf`) |
 | `tests/` | tests unitaires des features et test de bout en bout `train.py` → `predict.py` |
 | `run_all.sh` | relance toute la chaîne de livrables (~4 h sur 6 cœurs) |
 

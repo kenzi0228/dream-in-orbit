@@ -1,0 +1,163 @@
+% Bibliographie du rapport Dream in Orbit. Style : plainnat (natbib, citations numériques).
+% La bibliographie est composée en anglais (otherlanguage* dans rapport.tex) : babel-french n'y insère
+% donc pas d'espace avant « : » dans les titres et les identifiants (arXiv:…, doi:…).
+% plainnat passe les titres en minuscules : les noms propres sont protégés par des accolades.
+% Les prépublications arXiv portent leur identifiant dans le champ journal, sans champ doi (sinon il serait imprimé deux fois).
+% La note en français de esa2016kelvins est enveloppée dans \foreignlanguage{french}{...} (césures et espacement français).
+% Vérifié le 15 novembre 2026 : lucas2017mars et petkovic2019machine (auteurs, pages, volume, DOI) sur Crossref ;
+% esa2016kelvins (dates du concours) sur la page Kelvins ; hafner2019planet sur PMLR (vol. 97, p. 2555--2565).
+
+@article{ha2018world,
+  author  = {Ha, David and Schmidhuber, J{\"u}rgen},
+  title   = {World Models},
+  journal = {arXiv preprint arXiv:1803.10122},
+  year    = {2018}
+}
+
+@inproceedings{hafner2019planet,
+  author    = {Hafner, Danijar and Lillicrap, Timothy and Fischer, Ian and Villegas, Ruben and Ha, David and Lee, Honglak and Davidson, James},
+  title     = {Learning Latent Dynamics for Planning from Pixels},
+  booktitle = {Proceedings of the 36th International Conference on Machine Learning (ICML)},
+  series    = {Proceedings of Machine Learning Research},
+  volume    = {97},
+  pages     = {2555--2565},
+  year      = {2019}
+}
+
+@inproceedings{hafner2020dream,
+  author    = {Hafner, Danijar and Lillicrap, Timothy and Ba, Jimmy and Norouzi, Mohammad},
+  title     = {Dream to Control: Learning Behaviors by Latent Imagination},
+  booktitle = {International Conference on Learning Representations (ICLR)},
+  year      = {2020}
+}
+
+@inproceedings{cho2014gru,
+  author    = {Cho, Kyunghyun and van Merri{\"e}nboer, Bart and Gulcehre, Caglar and Bahdanau, Dzmitry and Bougares, Fethi and Schwenk, Holger and Bengio, Yoshua},
+  title     = {Learning Phrase Representations using {RNN} Encoder--Decoder for Statistical Machine Translation},
+  booktitle = {Proceedings of the 2014 Conference on Empirical Methods in Natural Language Processing (EMNLP)},
+  pages     = {1724--1734},
+  address   = {Doha, Qatar},
+  year      = {2014}
+}
+
+@inproceedings{bengio2015scheduled,
+  author    = {Bengio, Samy and Vinyals, Oriol and Jaitly, Navdeep and Shazeer, Noam},
+  title     = {Scheduled Sampling for Sequence Prediction with Recurrent Neural Networks},
+  booktitle = {Advances in Neural Information Processing Systems 28 (NIPS 2015)},
+  pages     = {1171--1179},
+  year      = {2015}
+}
+
+@article{huszar2015hownot,
+  author  = {Husz{\'a}r, Ferenc},
+  title   = {How (not) to Train your Generative Model: Scheduled Sampling, Likelihood, Adversary?},
+  journal = {arXiv preprint arXiv:1511.05101},
+  year    = {2015}
+}
+
+@article{williams1989learning,
+  author  = {Williams, Ronald J. and Zipser, David},
+  title   = {A Learning Algorithm for Continually Running Fully Recurrent Neural Networks},
+  journal = {Neural Computation},
+  volume  = {1},
+  number  = {2},
+  pages   = {270--280},
+  year    = {1989}
+}
+
+@inproceedings{lakshminarayanan2017deep,
+  author    = {Lakshminarayanan, Balaji and Pritzel, Alexander and Blundell, Charles},
+  title     = {Simple and Scalable Predictive Uncertainty Estimation using {Deep Ensembles}},
+  booktitle = {Advances in Neural Information Processing Systems 30 (NIPS 2017)},
+  pages     = {6402--6413},
+  year      = {2017}
+}
+
+@article{friedman2001greedy,
+  author  = {Friedman, Jerome H.},
+  title   = {Greedy Function Approximation: A Gradient Boosting Machine},
+  journal = {The Annals of Statistics},
+  volume  = {29},
+  number  = {5},
+  pages   = {1189--1232},
+  year    = {2001}
+}
+
+@article{breiman1996bagging,
+  author  = {Breiman, Leo},
+  title   = {Bagging Predictors},
+  journal = {Machine Learning},
+  volume  = {24},
+  number  = {2},
+  pages   = {123--140},
+  year    = {1996}
+}
+
+@inproceedings{ke2017lightgbm,
+  author    = {Ke, Guolin and Meng, Qi and Finley, Thomas and Wang, Taifeng and Chen, Wei and Ma, Weidong and Ye, Qiwei and Liu, Tie-Yan},
+  title     = {{LightGBM}: A Highly Efficient Gradient Boosting Decision Tree},
+  booktitle = {Advances in Neural Information Processing Systems 30 (NIPS 2017)},
+  pages     = {3146--3154},
+  year      = {2017}
+}
+
+@article{pedregosa2011scikit,
+  author  = {Pedregosa, Fabian and Varoquaux, Ga{\"e}l and Gramfort, Alexandre and Michel, Vincent and Thirion, Bertrand and Grisel, Olivier and Blondel, Mathieu and Prettenhofer, Peter and Weiss, Ron and Dubourg, Vincent and Vanderplas, Jake and Passos, Alexandre and Cournapeau, David and Brucher, Matthieu and Perrot, Matthieu and Duchesnay, {\'E}douard},
+  title   = {Scikit-learn: Machine Learning in {Python}},
+  journal = {Journal of Machine Learning Research},
+  volume  = {12},
+  pages   = {2825--2830},
+  year    = {2011}
+}
+
+@inproceedings{loshchilov2019decoupled,
+  author    = {Loshchilov, Ilya and Hutter, Frank},
+  title     = {Decoupled Weight Decay Regularization},
+  booktitle = {International Conference on Learning Representations (ICLR)},
+  year      = {2019}
+}
+
+@article{smith2017super,
+  author  = {Smith, Leslie N. and Topin, Nicholay},
+  title   = {Super-Convergence: Very Fast Training of Neural Networks Using Large Learning Rates},
+  journal = {arXiv preprint arXiv:1708.07120},
+  year    = {2017}
+}
+
+@inproceedings{paszke2019pytorch,
+  author    = {Paszke, Adam and Gross, Sam and Massa, Francisco and Lerer, Adam and Bradbury, James and Chanan, Gregory and Killeen, Trevor and Lin, Zeming and Gimelshein, Natalia and Antiga, Luca and Desmaison, Alban and K{\"o}pf, Andreas and Yang, Edward and DeVito, Zachary and Raison, Martin and Tejani, Alykhan and Chilamkurthy, Sasank and Steiner, Benoit and Fang, Lu and Bai, Junjie and Chintala, Soumith},
+  title     = {{PyTorch}: An Imperative Style, High-Performance Deep Learning Library},
+  booktitle = {Advances in Neural Information Processing Systems 32 (NeurIPS 2019)},
+  pages     = {8024--8035},
+  year      = {2019}
+}
+
+@inproceedings{lucas2017mars,
+  author    = {Lucas, Luke and Boumghar, Redouane},
+  title     = {Machine Learning for Spacecraft Operations Support -- The {Mars Express Power Challenge}},
+  booktitle = {2017 6th International Conference on Space Mission Challenges for Information Technology (SMC-IT)},
+  pages     = {82--87},
+  publisher = {IEEE},
+  address   = {Alcal{\'a} de Henares, Spain},
+  year      = {2017},
+  doi       = {10.1109/SMC-IT.2017.21}
+}
+
+@article{petkovic2019machine,
+  author  = {Petkovi{\'c}, Matej and Simidjievski, Nikola and Boumghar, Redouane and Breskvar, Martin and D{\v{z}}eroski, Sa{\v{s}}o and Kocev, Dragi and Levati{\'c}, Jurica and Lucas, Luke and Osojnik, Alja{\v{z}} and {\v{Z}}enko, Bernard},
+  title   = {Machine Learning for Predicting Thermal Power Consumption of the {Mars Express} Spacecraft},
+  journal = {IEEE Aerospace and Electronic Systems Magazine},
+  volume  = {34},
+  number  = {7},
+  pages   = {46--60},
+  year    = {2019},
+  doi     = {10.1109/MAES.2019.2915456}
+}
+
+@misc{esa2016kelvins,
+  author       = {{European Space Agency}},
+  title        = {{Mars Express Power Challenge}},
+  howpublished = {Plateforme Kelvins, \url{https://kelvins.esa.int/mars-express-power-challenge/}},
+  note         = {\foreignlanguage{french}{Concours de pr{\'e}diction de la consommation du sous-syst{\`e}me thermique de Mars Express, du 1\textsuperscript{er} avril au 1\textsuperscript{er} ao{\^u}t 2016. Page consult{\'e}e le 15~novembre 2026}},
+  year         = {2016}
+}

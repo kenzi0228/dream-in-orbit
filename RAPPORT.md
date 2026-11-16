@@ -13,10 +13,14 @@ régime d'une année à l'autre pour des raisons que le planning ne contient pas
 
 ## 1. Fiches des données
 
-Tout est aligné sur une grille horaire : une ligne par heure UTC (début d'heure, `ut_ms`),
-16 456 heures pour `annee1`, 16 242 pour `annee2`. La vérité est la moyenne horaire des mesures de
-`power.csv` (exactement comme `make_validation.py`) ; aucune heure n'est sans mesure, et une cellule
-sans vérité serait ignorée dans la perte comme dans le score.
+Tout est aligné sur une grille horaire calendaire : une ligne par heure UTC (début d'heure,
+`ut_ms`), du premier au dernier début d'heure de la période, soit 16 488 heures par période de
+687 jours. La vérité est la moyenne horaire des mesures de `power.csv` (exactement comme
+`make_validation.py`) ; elle existe sur 16 456 de ces heures pour `annee1` et 16 242 pour `annee2`.
+Les heures sans aucune mesure (32 dans `annee1`, en dix trous d'au plus 7 h ; 246 dans `annee2`, en
+47 trous d'au plus 22 h, dont une série entre le 13 et le 30 août 2011, juste avant le trou de
+commandes du 30 août) sont ignorées dans la perte comme dans le score : en strict, 16 073 heures
+sont notées sur les 16 319 prédites.
 
 ### power.csv — l'état (33 circuits NPWDxxxx)
 
@@ -36,7 +40,7 @@ sans vérité serait ignorée dans la perte comme dans le score.
 | Format | `AAAAF56A1` : 4 lettres de sous-système (AAAA, APSF, AMMM, ATTT = thermique, AXXX…), un code, une lettre de variante. Les entrées `MAPO.000…`/`MPER.…` marquent apocentre/péricentre, `PENS/PENE`, `MOCS/MOCE`… sont des paires début/fin |
 | Vocabulaire | 9 280 commandes distinctes dans annee1 ; le vocabulaire des features est appris sur la période d'entraînement seule (§ 2) : en strict, 148 commandes fréquentes, 117 « stems » (commande sans sa lettre de variante) émis ≥ 50 fois, 18 interrupteurs (stems à plusieurs variantes fréquentes, 49 couples stem/lettre) |
 | Features livrées | **sans lettre de variante** : comptes horaires par stem (`dm_sc_`), commandes à venir dans l'heure et les 6 heures suivantes (`dm_sn1_`, `dm_sn6_`), heures depuis / jusqu'au prochain changement de variante de chaque interrupteur (`dm_sw_`), comptes par sous-système, récences par sous-système et par stem, fraction d'heure dans les intervalles début/fin. Les features par lettre (`dm_s_` états, `dm_c_` comptes, `dm_r_` récences par commande) existent dans le cache mais aucun modèle livré ne les lit |
-| Pièges | dérive du vocabulaire d'une année à l'autre : les lettres de variante changent pour 20 des 29 interrupteurs, le sous-système AACF (5 825 commandes) n'existe que dans annee2 ; **trous** : `dmop.csv` est vide 83 jours dans annee2 (deux trous de 34 et 35 jours, un de 14, un de 15) contre 56 jours dans annee1 (aucun trou de plus de 15 jours) |
+| Pièges | dérive du vocabulaire d'une année à l'autre : les lettres de variante changent pour 20 des 29 interrupteurs, le sous-système AACF (5 825 commandes) n'existe que dans annee2 ; **trous** de plus de 24 h : `dmop.csv` est vide 126 jours dans annee2 (huit trous de 7 à 35 jours : deux de 34 et 35 jours, un de 14, un de 15, quatre d'une semaine ; plus 13 jours sans commande en fin de période) contre 56 jours dans annee1 (sept trous, aucun de plus de 15 jours) |
 
 ### ftl.csv — les pointages (actions)
 
@@ -68,7 +72,7 @@ sans vérité serait ignorée dans la perte comme dans le score.
 |---|---|
 | Lignes | 687 / 687, une par jour : distances Soleil-Mars et Terre-Mars, angle Soleil-Mars-Terre, constante solaire, durée d'éclipse et d'occultation |
 | Features | interpolation linéaire à l'heure |
-| Piège | **distance Terre-Mars et angle Soleil-Mars-Terre jouent le rôle de calendrier** : leur période (780 j) diffère de l'année martienne (687 j), donc le couple (distance Soleil, distance Terre) identifie la date de façon unique. Un réseau les utilise pour mémoriser l'année d'entraînement : on les retire (ablation : +0,013) |
+| Piège | **distance Terre-Mars et angle Soleil-Mars-Terre jouent le rôle de calendrier** : leur période (780 j) diffère de l'année martienne (687 j), donc le couple (distance Soleil, distance Terre) identifie la date de façon unique. Un réseau les utilise pour mémoriser l'année d'entraînement : on les retire (ablation : +0,009) |
 
 ## 2. Protocole d'évaluation
 

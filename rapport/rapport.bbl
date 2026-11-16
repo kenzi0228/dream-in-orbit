@@ -1,0 +1,152 @@
+\begin{thebibliography}{18}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Bengio et~al.(2015)Bengio, Vinyals, Jaitly, and
+  Shazeer]{bengio2015scheduled}
+Samy Bengio, Oriol Vinyals, Navdeep Jaitly, and Noam Shazeer.
+\newblock Scheduled sampling for sequence prediction with recurrent neural
+  networks.
+\newblock In \emph{Advances in Neural Information Processing Systems 28 (NIPS
+  2015)}, pages 1171--1179, 2015.
+
+\bibitem[Breiman(1996)]{breiman1996bagging}
+Leo Breiman.
+\newblock Bagging predictors.
+\newblock \emph{Machine Learning}, 24\penalty0 (2):\penalty0 123--140, 1996.
+
+\bibitem[Cho et~al.(2014)Cho, van Merri{\"e}nboer, Gulcehre, Bahdanau,
+  Bougares, Schwenk, and Bengio]{cho2014gru}
+Kyunghyun Cho, Bart van Merri{\"e}nboer, Caglar Gulcehre, Dzmitry Bahdanau,
+  Fethi Bougares, Holger Schwenk, and Yoshua Bengio.
+\newblock Learning phrase representations using {RNN} encoder--decoder for
+  statistical machine translation.
+\newblock In \emph{Proceedings of the 2014 Conference on Empirical Methods in
+  Natural Language Processing (EMNLP)}, pages 1724--1734, Doha, Qatar, 2014.
+
+\bibitem[{European Space Agency}(2016)]{esa2016kelvins}
+{European Space Agency}.
+\newblock {Mars Express Power Challenge}.
+\newblock Plateforme Kelvins,
+  \url{https://kelvins.esa.int/mars-express-power-challenge/}, 2016.
+\newblock \foreignlanguage{french}{Concours de pr{\'e}diction de la
+  consommation du sous-syst{\`e}me thermique de Mars Express, du
+  1\textsuperscript{er} avril au 1\textsuperscript{er} ao{\^u}t 2016. Page
+  consult{\'e}e le 15~novembre 2026}.
+
+\bibitem[Friedman(2001)]{friedman2001greedy}
+Jerome~H. Friedman.
+\newblock Greedy function approximation: A gradient boosting machine.
+\newblock \emph{The Annals of Statistics}, 29\penalty0 (5):\penalty0
+  1189--1232, 2001.
+
+\bibitem[Ha and Schmidhuber(2018)]{ha2018world}
+David Ha and J{\"u}rgen Schmidhuber.
+\newblock World models.
+\newblock \emph{arXiv preprint arXiv:1803.10122}, 2018.
+
+\bibitem[Hafner et~al.(2019)Hafner, Lillicrap, Fischer, Villegas, Ha, Lee, and
+  Davidson]{hafner2019planet}
+Danijar Hafner, Timothy Lillicrap, Ian Fischer, Ruben Villegas, David Ha,
+  Honglak Lee, and James Davidson.
+\newblock Learning latent dynamics for planning from pixels.
+\newblock In \emph{Proceedings of the 36th International Conference on Machine
+  Learning (ICML)}, volume~97 of \emph{Proceedings of Machine Learning
+  Research}, pages 2555--2565, 2019.
+
+\bibitem[Hafner et~al.(2020)Hafner, Lillicrap, Ba, and
+  Norouzi]{hafner2020dream}
+Danijar Hafner, Timothy Lillicrap, Jimmy Ba, and Mohammad Norouzi.
+\newblock Dream to control: Learning behaviors by latent imagination.
+\newblock In \emph{International Conference on Learning Representations
+  (ICLR)}, 2020.
+
+\bibitem[Husz{\'a}r(2015)]{huszar2015hownot}
+Ferenc Husz{\'a}r.
+\newblock How (not) to train your generative model: Scheduled sampling,
+  likelihood, adversary?
+\newblock \emph{arXiv preprint arXiv:1511.05101}, 2015.
+
+\bibitem[Ke et~al.(2017)Ke, Meng, Finley, Wang, Chen, Ma, Ye, and
+  Liu]{ke2017lightgbm}
+Guolin Ke, Qi~Meng, Thomas Finley, Taifeng Wang, Wei Chen, Weidong Ma, Qiwei
+  Ye, and Tie-Yan Liu.
+\newblock {LightGBM}: A highly efficient gradient boosting decision tree.
+\newblock In \emph{Advances in Neural Information Processing Systems 30 (NIPS
+  2017)}, pages 3146--3154, 2017.
+
+\bibitem[Lakshminarayanan et~al.(2017)Lakshminarayanan, Pritzel, and
+  Blundell]{lakshminarayanan2017deep}
+Balaji Lakshminarayanan, Alexander Pritzel, and Charles Blundell.
+\newblock Simple and scalable predictive uncertainty estimation using {Deep
+  Ensembles}.
+\newblock In \emph{Advances in Neural Information Processing Systems 30 (NIPS
+  2017)}, pages 6402--6413, 2017.
+
+\bibitem[Loshchilov and Hutter(2019)]{loshchilov2019decoupled}
+Ilya Loshchilov and Frank Hutter.
+\newblock Decoupled weight decay regularization.
+\newblock In \emph{International Conference on Learning Representations
+  (ICLR)}, 2019.
+
+\bibitem[Lucas and Boumghar(2017)]{lucas2017mars}
+Luke Lucas and Redouane Boumghar.
+\newblock Machine learning for spacecraft operations support -- the {Mars
+  Express Power Challenge}.
+\newblock In \emph{2017 6th International Conference on Space Mission
+  Challenges for Information Technology (SMC-IT)}, pages 82--87, Alcal{\'a} de
+  Henares, Spain, 2017. IEEE.
+\newblock \doi{10.1109/SMC-IT.2017.21}.
+
+\bibitem[Paszke et~al.(2019)Paszke, Gross, Massa, Lerer, Bradbury, Chanan,
+  Killeen, Lin, Gimelshein, Antiga, Desmaison, K{\"o}pf, Yang, DeVito, Raison,
+  Tejani, Chilamkurthy, Steiner, Fang, Bai, and Chintala]{paszke2019pytorch}
+Adam Paszke, Sam Gross, Francisco Massa, Adam Lerer, James Bradbury, Gregory
+  Chanan, Trevor Killeen, Zeming Lin, Natalia Gimelshein, Luca Antiga, Alban
+  Desmaison, Andreas K{\"o}pf, Edward Yang, Zachary DeVito, Martin Raison,
+  Alykhan Tejani, Sasank Chilamkurthy, Benoit Steiner, Lu~Fang, Junjie Bai, and
+  Soumith Chintala.
+\newblock {PyTorch}: An imperative style, high-performance deep learning
+  library.
+\newblock In \emph{Advances in Neural Information Processing Systems 32
+  (NeurIPS 2019)}, pages 8024--8035, 2019.
+
+\bibitem[Pedregosa et~al.(2011)Pedregosa, Varoquaux, Gramfort, Michel, Thirion,
+  Grisel, Blondel, Prettenhofer, Weiss, Dubourg, Vanderplas, Passos,
+  Cournapeau, Brucher, Perrot, and Duchesnay]{pedregosa2011scikit}
+Fabian Pedregosa, Ga{\"e}l Varoquaux, Alexandre Gramfort, Vincent Michel,
+  Bertrand Thirion, Olivier Grisel, Mathieu Blondel, Peter Prettenhofer, Ron
+  Weiss, Vincent Dubourg, Jake Vanderplas, Alexandre Passos, David Cournapeau,
+  Matthieu Brucher, Matthieu Perrot, and {\'E}douard Duchesnay.
+\newblock Scikit-learn: Machine learning in {Python}.
+\newblock \emph{Journal of Machine Learning Research}, 12:\penalty0 2825--2830,
+  2011.
+
+\bibitem[Petkovi{\'c} et~al.(2019)Petkovi{\'c}, Simidjievski, Boumghar,
+  Breskvar, D{\v{z}}eroski, Kocev, Levati{\'c}, Lucas, Osojnik, and
+  {\v{Z}}enko]{petkovic2019machine}
+Matej Petkovi{\'c}, Nikola Simidjievski, Redouane Boumghar, Martin Breskvar,
+  Sa{\v{s}}o D{\v{z}}eroski, Dragi Kocev, Jurica Levati{\'c}, Luke Lucas,
+  Alja{\v{z}} Osojnik, and Bernard {\v{Z}}enko.
+\newblock Machine learning for predicting thermal power consumption of the
+  {Mars Express} spacecraft.
+\newblock \emph{IEEE Aerospace and Electronic Systems Magazine}, 34\penalty0
+  (7):\penalty0 46--60, 2019.
+\newblock \doi{10.1109/MAES.2019.2915456}.
+
+\bibitem[Smith and Topin(2017)]{smith2017super}
+Leslie~N. Smith and Nicholay Topin.
+\newblock Super-convergence: Very fast training of neural networks using large
+  learning rates.
+\newblock \emph{arXiv preprint arXiv:1708.07120}, 2017.
+
+\bibitem[Williams and Zipser(1989)]{williams1989learning}
+Ronald~J. Williams and David Zipser.
+\newblock A learning algorithm for continually running fully recurrent neural
+  networks.
+\newblock \emph{Neural Computation}, 1\penalty0 (2):\penalty0 270--280, 1989.
+
+\end{thebibliography}

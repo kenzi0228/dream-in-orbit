@@ -28,3 +28,15 @@ weights_holdout_split/*
 !weights_holdout_split/val_pred.csv
 !weights_holdout_split/val_std.csv
 !weights_holdout_split/meta.json
+# outils locaux (moteur LaTeX Tectonic)
+tools/
+# configuration locale de l'app (serveur de prévisualisation)
+.claude/
+# fichiers auxiliaires LaTeX
+rapport/rapport.log
+rapport/*.aux
+rapport/*.blg
+rapport/*.out
+rapport/*.xdv
+rapport/*.fls
+rapport/*.fdb_latexmk
